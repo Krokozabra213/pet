@@ -4,11 +4,13 @@ import (
 	"log/slog"
 	"time"
 
-	authgrpc "github.com/Krokozabra213/sso/internal/auth/app/grpc"
+	appgrpc "github.com/Krokozabra213/sso/internal/auth/app/grpc"
+	authBusiness "github.com/Krokozabra213/sso/internal/auth/business"
+	"github.com/Krokozabra213/sso/internal/auth/repository/storage/postgres"
 )
 
 type App struct {
-	GRPCSrv *authgrpc.App
+	GRPCSrv *appgrpc.App
 }
 
 func New(
@@ -17,11 +19,10 @@ func New(
 	storagePath string,
 	tokenTTL time.Duration,
 ) *App {
-	// TODO: инициализировать хранилище (storage)
 
-	// TODO: init business
-
-	grpcApp := authgrpc.New(log, grpcPort)
+	postgres := postgres.New()
+	business := authBusiness.New(log, postgres, postgres, postgres, tokenTTL)
+	grpcApp := appgrpc.New(log, grpcPort, business)
 
 	return &App{
 		GRPCSrv: grpcApp,
