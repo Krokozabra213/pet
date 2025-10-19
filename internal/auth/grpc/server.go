@@ -1,4 +1,4 @@
-package grpc
+package authgrpc
 
 import (
 	"context"
@@ -11,37 +11,20 @@ const (
 	emptyVal = 0
 )
 
-// TODO
-
-// type Business interface {
-// 	Login(ctx context.Context, username, password string, appID int) (token string, err error)
-// 	Register(ctx context.Context, username, password string) (userID int64, err error)
-// 	GetAppSault(ctx context.Context, appID int) (string, error)
-// 	IsAdmin(ctx context.Context, userID int64) (bool, error)
-// }
+type IBusiness interface {
+	Login(ctx context.Context, username, password string, appID int) (token string, err error)
+	RegisterNewUser(ctx context.Context, username, password string) (userID int64, err error)
+	AppSault(ctx context.Context, appID int) (string, error)
+	IsAdmin(ctx context.Context, userID int64) (bool, error)
+}
 
 type serverAPI struct {
 	sso.UnimplementedAuthServer
+	Business IBusiness
 }
 
-func Register(grpc *grpc.Server) {
-	sso.RegisterAuthServer(grpc, &serverAPI{})
-}
-
-func (s *serverAPI) Login(
-	ctx context.Context,
-	r *sso.LoginRequest,
-) (*sso.LoginResponse, error) {
-
-	username, pass, appID := r.Username, r.Password, r.AppId
-	if username == "" || pass == "" || appID == emptyVal {
-		return nil, ErrInvalidCredentials
-	}
-
-	resp := &sso.LoginResponse{
-		Token: "test",
-	}
-	return resp, nil
+func Register(grpc *grpc.Server, business IBusiness) {
+	sso.RegisterAuthServer(grpc, &serverAPI{Business: business})
 }
 
 func (s *serverAPI) Register(
@@ -54,10 +37,26 @@ func (s *serverAPI) Register(
 		return nil, ErrInvalidCredentials
 	}
 
-	resp := &sso.RegisterResponse{
-		UserId: 1,
+	userID, err := s.Business.RegisterNewUser(ctx, username, pass)
+	return &sso.RegisterResponse{
+		UserId: userID,
+	}, err
+}
+
+func (s *serverAPI) Login(
+	ctx context.Context,
+	r *sso.LoginRequest,
+) (*sso.LoginResponse, error) {
+
+	username, pass, appID := r.Username, r.Password, r.AppId
+	if username == "" || pass == "" || appID == emptyVal {
+		return nil, ErrInvalidCredentials
 	}
-	return resp, nil
+
+	token, err := s.Business.Login(ctx, username, pass, int(appID))
+	return &sso.LoginResponse{
+		Token: token,
+	}, err
 }
 
 func (s *serverAPI) IsAdmin(
@@ -70,10 +69,10 @@ func (s *serverAPI) IsAdmin(
 		return nil, ErrInvalidCredentials
 	}
 
-	resp := &sso.IsAdminResponse{
-		IsAdmin: true,
-	}
-	return resp, nil
+	access, err := s.Business.IsAdmin(ctx, userID)
+	return &sso.IsAdminResponse{
+		IsAdmin: access,
+	}, err
 }
 
 func (s *serverAPI) AppSault(
@@ -86,8 +85,8 @@ func (s *serverAPI) AppSault(
 		return nil, ErrInvalidCredentials
 	}
 
-	resp := &sso.AppSaultResponse{
-		Sault: "test",
-	}
-	return resp, nil
+	sault, err := s.Business.AppSault(ctx, int(appID))
+	return &sso.AppSaultResponse{
+		Sault: sault,
+	}, err
 }
