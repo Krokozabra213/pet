@@ -1,7 +1,9 @@
 package domain
 
+import "gorm.io/gorm"
+
 type User struct {
-	ID       int64
-	Username string
-	PassHash []byte
+	gorm.Model
+	Username string `gorm:"index"`
+	Password string
 }

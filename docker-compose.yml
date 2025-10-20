@@ -1,0 +1,13 @@
+services:
+  postgres:
+    container_name: postgres_go
+    image: postgres:16.4
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: postgres
+      PGDATA: /data/postgres
+    volumes:
+      - ./postgres-data:/data/postgres
+    ports:
+      - "0.0.0.0:5555:5432"
