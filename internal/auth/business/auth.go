@@ -69,10 +69,10 @@ func (a *Auth) Login(
 		return "", fmt.Errorf("%s: %w", op, err)
 	}
 
-	// err = bcrypt.CompareHashAndPassword(user.PassHash, []byte(password))
-	// if err != nil {
-	// 	return "", fmt.Errorf("%s: %w", op, ErrInvalidCredentials)
-	// }
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	if err != nil {
+		return "", fmt.Errorf("%s: %w", op, ErrInvalidCredentials)
+	}
 
 	app, err := a.appProvider.App(ctx, appID)
 	if err != nil {

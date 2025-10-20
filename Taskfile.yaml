@@ -1,0 +1,9 @@
+version: "3"
+
+tasks:
+  generate:
+    aliases:
+      - postgres
+    desc: "connect to postgres db"
+    cmds:
+      - go run cmd/migrations/main.go -host=localhost -user=user -password=password -dbname=postgres -port=5555 -sslmode=disable

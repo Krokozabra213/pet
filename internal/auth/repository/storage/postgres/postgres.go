@@ -24,11 +24,13 @@ func (p *Postgres) User(
 	ctx context.Context, username string,
 ) (domain.User, error) {
 	//TODO:...
-	return domain.User{
+
+	user := domain.User{
 		Username: "test",
-		PassHash: []byte("test"),
-		ID:       10,
-	}, nil
+		Password: "test",
+	}
+	user.ID = 5
+	return user, nil
 }
 
 func (p *Postgres) IsAdmin(
@@ -42,9 +44,10 @@ func (p *Postgres) App(
 	ctx context.Context, appID int,
 ) (domain.App, error) {
 	//TODO:...
-	return domain.App{
-		ID:    1,
+	app := domain.App{
 		Name:  "app1",
 		Sault: "test123",
-	}, nil
+	}
+	app.ID = 5
+	return app, nil
 }
