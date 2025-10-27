@@ -12,10 +12,18 @@ const (
 )
 
 type IBusiness interface {
-	Login(ctx context.Context, username, password string, appID int) (token string, err error)
-	RegisterNewUser(ctx context.Context, username, password string) (userID int64, err error)
-	AppSault(ctx context.Context, appID int) (string, error)
+	Login(ctx context.Context, username, password string, appID int) (
+		accessToken string, refreshToken string, err error,
+	)
+	RegisterNewUser(ctx context.Context, username, password string) (
+		userID uint, err error,
+	)
+	PublicKey(ctx context.Context, appID int) (string, error)
 	IsAdmin(ctx context.Context, userID int64) (bool, error)
+	Logout(ctx context.Context, refreshToken string) (bool, error)
+	Refresh(ctx context.Context, token string) (
+		accessToken string, refreshToken string, err error,
+	)
 }
 
 type serverAPI struct {
@@ -32,6 +40,7 @@ func (s *serverAPI) Register(
 	r *sso.RegisterRequest,
 ) (*sso.RegisterResponse, error) {
 
+	// TODO: VALIDATE
 	username, pass := r.Username, r.Password
 	if username == "" || pass == "" {
 		return nil, ErrInvalidCredentials
@@ -39,7 +48,7 @@ func (s *serverAPI) Register(
 
 	userID, err := s.Business.RegisterNewUser(ctx, username, pass)
 	return &sso.RegisterResponse{
-		UserId: userID,
+		UserId: int64(userID),
 	}, err
 }
 
@@ -48,14 +57,52 @@ func (s *serverAPI) Login(
 	r *sso.LoginRequest,
 ) (*sso.LoginResponse, error) {
 
+	// TODO: VALIDATE
 	username, pass, appID := r.Username, r.Password, r.AppId
 	if username == "" || pass == "" || appID == emptyVal {
 		return nil, ErrInvalidCredentials
 	}
 
-	token, err := s.Business.Login(ctx, username, pass, int(appID))
+	accessToken, refreshToken, err := s.Business.Login(ctx, username, pass, int(appID))
 	return &sso.LoginResponse{
-		Token: token,
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}, err
+}
+
+func (s *serverAPI) Logout(
+	ctx context.Context,
+	r *sso.LogoutRequest,
+) (*sso.LogoutResponse, error) {
+
+	// TODO: VALIDATE
+	refreshToken := r.RefreshToken
+	if refreshToken == "" {
+		return nil, ErrInvalidCredentials
+	}
+
+	success, err := s.Business.Logout(ctx, refreshToken)
+
+	return &sso.LogoutResponse{
+		Success: success,
+	}, err
+}
+
+func (s *serverAPI) Refresh(
+	ctx context.Context,
+	r *sso.RefreshRequest,
+) (*sso.RefreshResponse, error) {
+
+	// TODO: VALIDATE
+	token := r.RefreshToken
+	if token == "" {
+		return nil, ErrInvalidCredentials
+	}
+
+	access, refresh, err := s.Business.Refresh(ctx, token)
+	return &sso.RefreshResponse{
+		AccessToken:  access,
+		RefreshToken: refresh,
 	}, err
 }
 
@@ -64,6 +111,7 @@ func (s *serverAPI) IsAdmin(
 	r *sso.IsAdminRequest,
 ) (*sso.IsAdminResponse, error) {
 
+	// TODO: VALIDATE
 	userID := r.UserId
 	if userID == emptyVal {
 		return nil, ErrInvalidCredentials
@@ -75,18 +123,19 @@ func (s *serverAPI) IsAdmin(
 	}, err
 }
 
-func (s *serverAPI) AppSault(
+func (s *serverAPI) GetPublicKey(
 	ctx context.Context,
-	r *sso.AppSaultRequest,
-) (*sso.AppSaultResponse, error) {
+	r *sso.PublicKeyRequest,
+) (*sso.PublicKeyResponse, error) {
 
+	// TODO: VALIDATE
 	appID := r.AppId
 	if appID == emptyVal {
 		return nil, ErrInvalidCredentials
 	}
 
-	sault, err := s.Business.AppSault(ctx, int(appID))
-	return &sso.AppSaultResponse{
-		Sault: sault,
+	publicKey, err := s.Business.PublicKey(ctx, int(appID))
+	return &sso.PublicKeyResponse{
+		PublicKey: publicKey,
 	}, err
 }
