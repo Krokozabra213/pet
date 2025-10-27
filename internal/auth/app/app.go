@@ -2,11 +2,13 @@ package app
 
 import (
 	"log/slog"
-	"time"
 
+	"github.com/Krokozabra213/sso/configs/ssoconfig"
 	appgrpc "github.com/Krokozabra213/sso/internal/auth/app/grpc"
 	authBusiness "github.com/Krokozabra213/sso/internal/auth/business"
+	keymanager "github.com/Krokozabra213/sso/internal/auth/lib/key-manager"
 	"github.com/Krokozabra213/sso/internal/auth/repository/storage/postgres"
+	"github.com/Krokozabra213/sso/pkg/db"
 )
 
 type App struct {
@@ -15,14 +17,15 @@ type App struct {
 
 func New(
 	log *slog.Logger,
-	grpcPort int,
-	storagePath string,
-	tokenTTL time.Duration,
+	cfg *ssoconfig.Config,
 ) *App {
-
-	postgres := postgres.New()
-	business := authBusiness.New(log, postgres, postgres, postgres, tokenTTL)
-	grpcApp := appgrpc.New(log, grpcPort, business)
+	dbConn := db.NewPGDb(cfg.DB.DSN)
+	postgres := postgres.New(dbConn)
+	keyManager := keymanager.New(cfg.Security.PrivateKey)
+	business := authBusiness.New(
+		log, cfg, postgres, postgres, postgres, postgres, keyManager,
+	)
+	grpcApp := appgrpc.New(log, cfg.Server.Port, business)
 
 	return &App{
 		GRPCSrv: grpcApp,

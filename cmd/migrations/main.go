@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 
 	"github.com/Krokozabra213/sso/internal/auth/domain"
 	"gorm.io/driver/postgres"
@@ -24,12 +25,16 @@ func main() {
 		"host=%s user=%s password=%s dbname=%s port=%s sslmode=%s",
 		*host, *user, *password, *dbname, *port, *sslmode,
 	)
-	fmt.Println(dsn)
 
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+		// Logger: logger.Default.LogMode(logger.Info),
+	})
 	if err != nil {
 		panic(err)
 	}
 
-	db.AutoMigrate(&domain.App{}, &domain.User{})
+	err = db.AutoMigrate(&domain.App{}, &domain.User{}, &domain.Admin{}, &domain.BlackToken{})
+	if err != nil {
+		log.Printf("Migration error: %v", err)
+	}
 }

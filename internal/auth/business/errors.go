@@ -6,6 +6,14 @@ var (
 	ErrInvalidCredentials = errors.New("invalid credentials")
 	ErrInvalidAppId       = errors.New("invalid app id")
 	ErrUserExist          = errors.New("user already exists")
-	ErrUnknown            = errors.New("unknown error")
 	ErrPermission         = errors.New("permission error")
+	ErrTokenRevoked       = errors.New("token revoked")
+	ErrHashPassword       = errors.New("hash password error")
+)
+
+//domain errors
+var (
+	ErrAppUnknown   = errors.New("unknown app error")
+	ErrUserUnknown  = errors.New("unknown user error")
+	ErrTokenUnknown = errors.New("unknown token error")
 )
