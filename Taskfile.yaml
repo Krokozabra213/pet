@@ -1,9 +1,12 @@
 version: "3"
 
 tasks:
-  generate:
-    aliases:
-      - migrate
+  migrate:
     desc: "automigrating postgres db"
     cmds:
       - go run cmd/migrations/main.go -host=localhost -user=user -password=password -dbname=postgres -port=5555 -sslmode=disable
+
+  migrate-test:
+    desc: "automigrating postgres testdb"
+    cmds:
+      - go run cmd/migrations/main.go -host=localhost -user=user_test -password=password_test -dbname=postgres_test -port=5556 -sslmode=disable

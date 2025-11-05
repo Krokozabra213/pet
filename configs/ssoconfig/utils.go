@@ -45,10 +45,23 @@ func getEnvAtoiOrFatal(key string) int {
 }
 
 func getEnvDefault(key, defaultValue string) string {
-	if value := os.Getenv(key); value != "" {
+	if value := os.Getenv(key); value != emptyValue {
 		return value
 	}
 	return defaultValue
+}
+
+func getEnvDefaultInt(key string, defaultValue int) int {
+	var intValue int
+	var err error
+
+	if value := os.Getenv(key); value != emptyValue {
+		if intValue, err = strconv.Atoi(value); err != nil {
+			log.Printf("getEnvDefaultInt config err")
+			return defaultValue
+		}
+	}
+	return intValue
 }
 
 func getEnvOrFatal(key string) string {
