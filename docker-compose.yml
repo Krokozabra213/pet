@@ -11,3 +11,17 @@ services:
       - ./postgres-data:/data/postgres
     ports:
       - "0.0.0.0:5555:5432"
+
+  postgres_test:
+    container_name: postgres_go_test
+    image: postgres:16.4
+    environment:
+      POSTGRES_USER: user_test
+      POSTGRES_PASSWORD: password_test
+      POSTGRES_DB: postgres_test
+      PGDATA: /data/postgres_test
+    volumes:
+      - ./postgres-data-test:/data/postgres_test
+    ports:
+      - "0.0.0.0:5556:5432"
+      

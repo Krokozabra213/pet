@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -13,31 +12,19 @@ import (
 )
 
 const (
-	envLocal = "local"
-	envProd  = "prod"
-	envDev   = "dev"
-)
-
-var (
-	host     = flag.String("host", "", "host for connect db")
-	user     = flag.String("user", "", "username for connect db")
-	password = flag.String("password", "", "password for connect db")
-	dbname   = flag.String("dbname", "", "dbname for connect db")
-	port     = flag.String("port", "", "port for connect db")
-	sslmode  = flag.String("sslmode", "", "sslmode for connect db")
+	EnvLocal = "local"
+	EnvProd  = "prod"
+	EnvDev   = "dev"
 )
 
 func main() {
-	flag.Parse()
-	// dsn := fmt.Sprintf(
-	// 	"host=%s user=%s password=%s dbname=%s port=%s sslmode=%s",
-	// 	*host, *user, *password, *dbname, *port, *sslmode,
-	// )
-	cfg := ssoconfig.Load(envLocal)
-	log := logger.SetupLogger(envLocal)
+
+	env := EnvLocal
+
+	cfg := ssoconfig.Load(env, true)
+	log := logger.SetupLogger(env)
 
 	application := app.New(log, cfg)
-	// application := app.New(log, 44044, "", 15*time.Minute, 10_000*time.Minute, dsn, "testSecret")
 
 	go application.GRPCSrv.MustRun()
 

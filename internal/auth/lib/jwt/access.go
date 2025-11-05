@@ -43,7 +43,7 @@ func (data *AccessData) Validate() error {
 	return nil
 }
 
-func ParseAccess(token string, keyManager IPublicKey) (*RefreshData, error) {
+func ParseAccess(token string, keyManager IPublicKey) (*AccessData, error) {
 
 	t, err := jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodRSA); !ok {
@@ -73,7 +73,7 @@ func ParseAccess(token string, keyManager IPublicKey) (*RefreshData, error) {
 	return jwtData, nil
 }
 
-func accessClaims(claims jwt.MapClaims) (*RefreshData, error) {
+func accessClaims(claims jwt.MapClaims) (*AccessData, error) {
 	// integers become float64 when decoding JWT
 	userID, ok := claims[UserID].(float64)
 	if !ok {
@@ -95,7 +95,7 @@ func accessClaims(claims jwt.MapClaims) (*RefreshData, error) {
 		return nil, ErrAppID
 	}
 
-	return &RefreshData{
+	return &AccessData{
 		UserID:   int(userID),
 		Username: username,
 		Exp:      JWTFloatToTime(exp),

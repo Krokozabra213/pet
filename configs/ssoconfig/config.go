@@ -2,6 +2,7 @@ package ssoconfig
 
 import (
 	"log"
+	"path/filepath"
 
 	"github.com/Krokozabra213/sso/configs"
 	"github.com/joho/godotenv"
@@ -31,14 +32,30 @@ type Security struct {
 	RefreshTokenTTL int
 }
 
-func Load(env string) *Config {
+func Load(env string, test bool) *Config {
+	var root string
+	var err error
 
-	err := godotenv.Load()
+	if root, err = configs.FindProjectRoot(); err != nil {
+		log.Fatalf("Project root not found: %v", err)
+	}
+
+	if test {
+		envPath := filepath.Join(root, ".test.env")
+		err = godotenv.Load(envPath)
+	} else {
+		err = godotenv.Load()
+	}
+
 	if err != nil {
 		log.Fatalf("%s%s", op, configs.ErrLoadConfig.Error())
 	}
 
 	privateKeyPath := getEnvOrFatal(PrivateKey)
+	if test {
+		privateKeyPath = filepath.Join(root, privateKeyPath)
+	}
+
 	privateKey, err := PrivateKeyData(privateKeyPath)
 	if err != nil {
 		log.Fatalf("%s%s", op, err.Error())
@@ -54,8 +71,9 @@ func Load(env string) *Config {
 			Secret:          []byte(getEnvOrFatal(Secret)),
 		},
 		Server: &configs.Server{
-			Host: getEnvDefault(HOST, "localhost"),
-			Port: getEnvDefault(PORT, "44044"),
+			Host:    getEnvDefault(HOST, "localhost"),
+			Port:    getEnvDefault(PORT, "44044"),
+			TimeOut: getEnvDefaultInt(ContextTimeout, 5000),
 		},
 		DB: &configs.DB{
 			DSN: getEnvOrFatal(DSN),

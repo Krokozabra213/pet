@@ -1,3 +1,4 @@
 .env
-.postgres-data
-.secrets
+**/postgres-data
+**/postgres-data-test
+**/secrets
