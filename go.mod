@@ -2,11 +2,11 @@ module github.com/Krokozabra213/sso
 
 go 1.24.4
 
-require github.com/Krokozabra213/protos v0.0.5
-
 require (
+	github.com/Krokozabra213/protos v0.0.7 // indirect
 	github.com/brianvoe/gofakeit/v6 v6.28.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/envoyproxy/protoc-gen-validate v1.2.1 // indirect
 	github.com/golang-jwt/jwt/v5 v5.3.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect

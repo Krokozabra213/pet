@@ -17,7 +17,9 @@ type App struct {
 }
 
 func New(log *slog.Logger, port string, auth authgrpc.IBusiness) *App {
-	gRPCServer := grpc.NewServer()
+	gRPCServer := grpc.NewServer(
+		grpc.UnaryInterceptor(ValidationUnaryInterceptor),
+	)
 	grpcserver.Register(gRPCServer, auth)
 
 	return &App{

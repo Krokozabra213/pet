@@ -3,12 +3,8 @@ package authgrpc
 import (
 	"context"
 
-	"github.com/Krokozabra213/protos/gen/go/sso"
+	"github.com/Krokozabra213/protos/gen/go/proto/sso"
 	"google.golang.org/grpc"
-)
-
-const (
-	emptyVal = 0
 )
 
 type IBusiness interface {
@@ -40,13 +36,7 @@ func (s *serverAPI) Register(
 	r *sso.RegisterRequest,
 ) (*sso.RegisterResponse, error) {
 
-	// TODO: VALIDATE
-	username, pass := r.Username, r.Password
-	if username == "" || pass == "" {
-		return nil, ErrInvalidCredentials
-	}
-
-	userID, err := s.Business.RegisterNewUser(ctx, username, pass)
+	userID, err := s.Business.RegisterNewUser(ctx, r.GetUsername(), r.GetPassword())
 	return &sso.RegisterResponse{
 		UserId: int64(userID),
 	}, err
@@ -57,13 +47,7 @@ func (s *serverAPI) Login(
 	r *sso.LoginRequest,
 ) (*sso.LoginResponse, error) {
 
-	// TODO: VALIDATE
-	username, pass, appID := r.Username, r.Password, r.AppId
-	if username == "" || pass == "" || appID == emptyVal {
-		return nil, ErrInvalidCredentials
-	}
-
-	accessToken, refreshToken, err := s.Business.Login(ctx, username, pass, int(appID))
+	accessToken, refreshToken, err := s.Business.Login(ctx, r.GetUsername(), r.GetPassword(), int(r.GetAppId()))
 	return &sso.LoginResponse{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
@@ -75,13 +59,7 @@ func (s *serverAPI) Logout(
 	r *sso.LogoutRequest,
 ) (*sso.LogoutResponse, error) {
 
-	// TODO: VALIDATE
-	refreshToken := r.RefreshToken
-	if refreshToken == "" {
-		return nil, ErrInvalidCredentials
-	}
-
-	success, err := s.Business.Logout(ctx, refreshToken)
+	success, err := s.Business.Logout(ctx, r.GetRefreshToken())
 
 	return &sso.LogoutResponse{
 		Success: success,
@@ -93,13 +71,7 @@ func (s *serverAPI) Refresh(
 	r *sso.RefreshRequest,
 ) (*sso.RefreshResponse, error) {
 
-	// TODO: VALIDATE
-	token := r.RefreshToken
-	if token == "" {
-		return nil, ErrInvalidCredentials
-	}
-
-	access, refresh, err := s.Business.Refresh(ctx, token)
+	access, refresh, err := s.Business.Refresh(ctx, r.GetRefreshToken())
 	return &sso.RefreshResponse{
 		AccessToken:  access,
 		RefreshToken: refresh,
@@ -111,13 +83,7 @@ func (s *serverAPI) IsAdmin(
 	r *sso.IsAdminRequest,
 ) (*sso.IsAdminResponse, error) {
 
-	// TODO: VALIDATE
-	userID := r.UserId
-	if userID == emptyVal {
-		return nil, ErrInvalidCredentials
-	}
-
-	access, err := s.Business.IsAdmin(ctx, userID)
+	access, err := s.Business.IsAdmin(ctx, r.GetUserId())
 	return &sso.IsAdminResponse{
 		IsAdmin: access,
 	}, err
@@ -128,13 +94,7 @@ func (s *serverAPI) GetPublicKey(
 	r *sso.PublicKeyRequest,
 ) (*sso.PublicKeyResponse, error) {
 
-	// TODO: VALIDATE
-	appID := r.AppId
-	if appID == emptyVal {
-		return nil, ErrInvalidCredentials
-	}
-
-	publicKey, err := s.Business.PublicKey(ctx, int(appID))
+	publicKey, err := s.Business.PublicKey(ctx, int(r.GetAppId()))
 	return &sso.PublicKeyResponse{
 		PublicKey: publicKey,
 	}, err

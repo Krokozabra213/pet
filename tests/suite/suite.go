@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Krokozabra213/protos/gen/go/sso"
+	"github.com/Krokozabra213/protos/gen/go/proto/sso"
 	"github.com/Krokozabra213/sso/configs/ssoconfig"
 	"github.com/Krokozabra213/sso/internal/auth/domain"
 	"github.com/Krokozabra213/sso/pkg/db"
