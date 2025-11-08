@@ -13,3 +13,7 @@ func randomFakePassword() string {
 func randomUsername() string {
 	return gofakeit.Username()
 }
+
+func randomID(min, max int) int {
+	return gofakeit.Number(min, max)
+}

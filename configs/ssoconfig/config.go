@@ -23,6 +23,7 @@ type Config struct {
 	Security *Security
 	Server   *configs.Server
 	DB       *configs.DB
+	Redis    *configs.RedisDB
 }
 
 type Security struct {
@@ -77,6 +78,11 @@ func Load(env string, test bool) *Config {
 		},
 		DB: &configs.DB{
 			DSN: getEnvOrFatal(DSN),
+		},
+		Redis: &configs.RedisDB{
+			Addr:  getEnvOrFatal(RedisAddr),
+			Pass:  getEnvOrFatal(RedisPass),
+			Cache: getEnvAtoiOrFatal(RedisCache),
 		},
 	}
 }

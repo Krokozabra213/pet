@@ -16,6 +16,12 @@ type Server struct {
 	TimeOut int
 }
 
+type RedisDB struct {
+	Addr  string
+	Pass  string
+	Cache int
+}
+
 // func GetProjectRoot() string {
 // 	// Получаем путь к текущему файлу
 // 	_, filename, _, _ := runtime.Caller(0)

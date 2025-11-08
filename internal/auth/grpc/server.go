@@ -47,10 +47,10 @@ func (s *serverAPI) Login(
 	r *sso.LoginRequest,
 ) (*sso.LoginResponse, error) {
 
-	accessToken, refreshToken, err := s.Business.Login(ctx, r.GetUsername(), r.GetPassword(), int(r.GetAppId()))
+	access, refresh, err := s.Business.Login(ctx, r.GetUsername(), r.GetPassword(), int(r.GetAppId()))
 	return &sso.LoginResponse{
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
+		AccessToken:  access,
+		RefreshToken: refresh,
 	}, err
 }
 
@@ -60,7 +60,6 @@ func (s *serverAPI) Logout(
 ) (*sso.LogoutResponse, error) {
 
 	success, err := s.Business.Logout(ctx, r.GetRefreshToken())
-
 	return &sso.LogoutResponse{
 		Success: success,
 	}, err

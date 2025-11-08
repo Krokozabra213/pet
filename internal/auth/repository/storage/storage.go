@@ -8,4 +8,5 @@ var (
 	ErrAppNotFound  = errors.New("app not found")
 	ErrTokenRevoked = errors.New("token revoked")
 	ErrUnknown      = errors.New("unknown error")
+	ErrTokenExpired = errors.New("token already expired")
 )

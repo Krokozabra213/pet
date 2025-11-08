@@ -16,26 +16,23 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-var (
-	empty = ""
-)
-
 type IUserSaver interface {
 	SaveUser(ctx context.Context, username string, pass string) (uid uint, err error)
 }
 
 type ITokenRepo interface {
-	SaveToken(ctx context.Context, hashToken string, exp time.Time) (err error)
-	CheckToken(ctx context.Context, hashToken string, exp time.Time) (err error)
+	SaveToken(ctx context.Context, token string, expiresAt time.Time) error
+	CheckToken(ctx context.Context, token string) (bool, error)
 }
 
 type IUserProvider interface {
 	User(ctx context.Context, username string) (*domain.User, error)
+	UserByID(ctx context.Context, userID int) (*domain.User, error)
 	IsAdmin(ctx context.Context, userID int64) (bool, error)
 }
 
 type IAppProvider interface {
-	App(ctx context.Context, appID int) (*domain.App, error)
+	AppByID(ctx context.Context, appID int) (*domain.App, error)
 }
 
 type IKeyManager interface {
@@ -70,89 +67,8 @@ func New(
 	}
 }
 
-func (a *Auth) Logout(
-	ctx context.Context, refreshToken string,
-) (bool, error) {
-	const op = "auth.Logout"
+//-------------------------REGISTER-LOGIC-------------------------------------------------//
 
-	log := a.log.With(
-		slog.String("op", op),
-	)
-
-	jwtData, err := jwt.ParseRefresh(refreshToken, a.keyManager)
-	if err != nil {
-		log.Error("parse token error", "err", err)
-		return false, fmt.Errorf("%s: %w", op, err)
-	}
-
-	hashToken := hmac.HashJWTTokenHMAC(refreshToken, a.cfg.Security.Secret)
-
-	err = a.tokenRepo.SaveToken(ctx, hashToken, jwtData.Exp)
-	if err != nil {
-		if errors.Is(err, storage.ErrTokenRevoked) {
-			return false, fmt.Errorf("%s: %w", op, ErrTokenRevoked)
-		}
-
-		log.Error("unknown err revoke token", "err", err)
-		return false, fmt.Errorf("%s: %w", op, ErrTokenUnknown)
-	}
-
-	log.Info("user logouting")
-	return true, nil
-}
-
-// Login checks if user with given credentials exists in the system
-func (a *Auth) Login(
-	ctx context.Context, username, password string, appID int,
-) (string, string, error) {
-	const op = "auth.Login"
-
-	log := a.log.With(
-		slog.String("op", op),
-	)
-
-	user, err := a.userProvider.User(ctx, username)
-
-	if err != nil {
-		if errors.Is(err, storage.ErrUserNotFound) {
-			return empty, empty, fmt.Errorf("%s: %w", op, ErrInvalidCredentials)
-		}
-
-		log.Error("unknown err get user", "err", err.Error())
-		return empty, empty, fmt.Errorf("%s: %w", op, ErrUserUnknown)
-	}
-
-	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
-	if err != nil {
-		return empty, empty, fmt.Errorf("%s: %w", op, ErrInvalidCredentials)
-	}
-
-	app, err := a.appProvider.App(ctx, appID)
-	if err != nil {
-		if errors.Is(err, storage.ErrAppNotFound) {
-			return empty, empty, fmt.Errorf("%s: %w", op, ErrInvalidAppId)
-		}
-
-		log.Error("unknown err get app", "err", err.Error())
-		return empty, empty, fmt.Errorf("%s:%w", op, ErrAppUnknown)
-	}
-
-	tokenGen := jwt.New(
-		user, app, time.Duration(a.cfg.Security.AccessTokenTTL),
-		time.Duration(a.cfg.Security.RefreshTokenTTL), a.keyManager,
-	)
-
-	tokenPair, err := tokenGen.GenerateTokenPair()
-	if err != nil {
-		log.Error("failed to generate token", "err", err)
-		return empty, empty, fmt.Errorf("%s: %w", op, err)
-	}
-
-	log.Info("user loggining")
-	return tokenPair.AccessToken, tokenPair.RefreshToken, nil
-}
-
-// RegisterNewUser registers new user in the system and returns userID
 func (a *Auth) RegisterNewUser(
 	ctx context.Context, username, password string,
 ) (uint, error) {
@@ -181,7 +97,97 @@ func (a *Auth) RegisterNewUser(
 	return id, nil
 }
 
-// IsAdmin checks if user is admin
+//-------------------------LOGIN-LOGIC-------------------------------------------------//
+
+func (a *Auth) Login(
+	ctx context.Context, username, password string, appID int,
+) (string, string, error) {
+	const op = "auth.Login"
+
+	log := a.log.With(
+		slog.String("op", op),
+	)
+
+	log.Info("user login")
+
+	app, err := a.appProvider.AppByID(ctx, appID)
+	if err != nil {
+		if errors.Is(err, storage.ErrAppNotFound) {
+			return "", "", fmt.Errorf("%s: %w", op, ErrInvalidAppId)
+		}
+
+		log.Error("unknown err get app", "err", err.Error())
+		return "", "", fmt.Errorf("%s:%w", op, ErrAppUnknown)
+	}
+
+	user, err := a.userProvider.User(ctx, username)
+
+	if err != nil {
+		if errors.Is(err, storage.ErrUserNotFound) {
+			return "", "", fmt.Errorf("%s: %w", op, ErrInvalidCredentials)
+		}
+
+		log.Error("unknown err get user", "err", err.Error())
+		return "", "", fmt.Errorf("%s: %w", op, ErrUserUnknown)
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	if err != nil {
+		return "", "", fmt.Errorf("%s: %w", op, ErrInvalidCredentials)
+	}
+
+	tokenGen := jwt.New(
+		user, app, time.Duration(a.cfg.Security.AccessTokenTTL),
+		time.Duration(a.cfg.Security.RefreshTokenTTL), a.keyManager,
+	)
+
+	tokenPair, err := tokenGen.GenerateTokenPair()
+	if err != nil {
+		log.Error("failed to generate token", "err", err)
+		return "", "", fmt.Errorf("%s: %w", op, err)
+	}
+
+	log.Info("user loggining")
+	return tokenPair.AccessToken, tokenPair.RefreshToken, nil
+}
+
+//-------------------------LOGOUT-LOGIC-------------------------------------------------//
+
+func (a *Auth) Logout(
+	ctx context.Context, refreshToken string,
+) (bool, error) {
+	const op = "auth.Logout"
+
+	log := a.log.With(
+		slog.String("op", op),
+	)
+
+	log.Info("user logout")
+
+	claims, err := jwt.ParseRefresh(refreshToken, a.keyManager)
+	if err != nil {
+		log.Error("parse token error", "err", err)
+		return false, fmt.Errorf("%s: %w", op, err)
+	}
+
+	hashToken := hmac.HashJWTTokenHMAC(refreshToken, a.cfg.Security.Secret)
+
+	err = a.tokenRepo.SaveToken(ctx, hashToken, claims.Exp)
+	if err != nil {
+		if errors.Is(err, storage.ErrTokenExpired) {
+			return false, fmt.Errorf("%s: %w", op, ErrTokenExpired)
+		}
+
+		log.Error("unknown err revoke token", "err", err)
+		return false, fmt.Errorf("%s: %w", op, ErrTokenUnknown)
+	}
+
+	log.Info("user logouting")
+	return true, nil
+}
+
+//-------------------------ISADMIN-LOGIC-------------------------------------------------//
+
 func (a *Auth) IsAdmin(ctx context.Context, userID int64) (bool, error) {
 	const op = "auth.IsAdmin"
 
@@ -195,10 +201,15 @@ func (a *Auth) IsAdmin(ctx context.Context, userID int64) (bool, error) {
 		return false, fmt.Errorf("%s: %w", op, ErrUserUnknown)
 	}
 
+	if !isAdmin {
+		return false, fmt.Errorf("%s: %w", op, ErrPermission)
+	}
+
 	return isAdmin, nil
 }
 
-// return publickey for parse jwt tokens
+//-------------------------PUBLICKEY-LOGIC-------------------------------------------------//
+
 func (a *Auth) PublicKey(ctx context.Context, appID int) (string, error) {
 	const op = "auth.PublicKey"
 
@@ -206,18 +217,20 @@ func (a *Auth) PublicKey(ctx context.Context, appID int) (string, error) {
 		slog.String("op", op),
 	)
 
-	_, err := a.appProvider.App(ctx, appID)
+	_, err := a.appProvider.AppByID(ctx, appID)
 	if err != nil {
 		if errors.Is(err, storage.ErrAppNotFound) {
-			return empty, fmt.Errorf("%s: %w", op, ErrInvalidAppId)
+			return "", fmt.Errorf("%s: %w", op, ErrInvalidAppId)
 		}
 
 		log.Error("unknown get app error", "err", err)
-		return empty, fmt.Errorf("%s: %w", op, ErrAppUnknown)
+		return "", fmt.Errorf("%s: %w", op, ErrAppUnknown)
 	}
 
 	return a.keyManager.GetPublicKeyPEM()
 }
+
+//-------------------------REFRESH-LOGIC-------------------------------------------------//
 
 func (a *Auth) Refresh(ctx context.Context, refreshToken string) (string, string, error) {
 	const op = "auth.Refresh"
@@ -226,44 +239,50 @@ func (a *Auth) Refresh(ctx context.Context, refreshToken string) (string, string
 		slog.String("op", op),
 	)
 
+	log.Info("user try to refresh token")
+
+	// хешируем токен для безопасного хранения в базе
+	hashToken := hmac.HashJWTTokenHMAC(refreshToken, a.cfg.Security.Secret)
+	exist, err := a.tokenRepo.CheckToken(ctx, hashToken)
+	fmt.Println(exist, err)
+	if err != nil {
+		log.Error("check token err", "err", err)
+		return "", "", fmt.Errorf("%s: %w", op, ErrTokenUnknown)
+	}
+	if exist {
+		return "", "", ErrTokenRevoked
+	}
+
+	// достаём claims из refresh токена
 	claims, err := jwt.ParseRefresh(refreshToken, a.keyManager)
 	if err != nil {
 		log.Error("parse token err", "err", err)
-		return empty, empty, fmt.Errorf("%s: %w", op, err)
+		return "", "", fmt.Errorf("%s: %w", op, err)
 	}
 
-	hashToken := hmac.HashJWTTokenHMAC(refreshToken, a.cfg.Security.Secret)
-
-	err = a.tokenRepo.SaveToken(ctx, hashToken, claims.Exp)
-	if err != nil {
-		if errors.Is(err, storage.ErrTokenRevoked) {
-			return empty, empty, fmt.Errorf("%s: %w", op, ErrTokenRevoked)
-		}
-
-		log.Error("unknown err revoke token", "err", err)
-		return empty, empty, fmt.Errorf("%s: %w", op, ErrTokenUnknown)
-	}
-
-	user, err := a.userProvider.User(ctx, claims.Username)
+	// проверяем наличие пользователя с таким id
+	user, err := a.userProvider.UserByID(ctx, claims.UserID)
 	if err != nil {
 		if errors.Is(err, storage.ErrUserNotFound) {
-			return empty, empty, fmt.Errorf("%s: %w", op, ErrInvalidCredentials)
+			return "", "", fmt.Errorf("%s: %w", op, ErrInvalidCredentials)
 		}
 
 		log.Error("unknown err get user", "err", err.Error())
-		return empty, empty, fmt.Errorf("%s: %w", op, ErrUserUnknown)
+		return "", "", fmt.Errorf("%s: %w", op, ErrUserUnknown)
 	}
 
-	app, err := a.appProvider.App(ctx, claims.AppID)
+	// проверяем наличие приложения с таким id
+	app, err := a.appProvider.AppByID(ctx, claims.AppID)
 	if err != nil {
 		if errors.Is(err, storage.ErrAppNotFound) {
-			return empty, empty, fmt.Errorf("%s: %w", op, ErrInvalidAppId)
+			return "", "", fmt.Errorf("%s: %w", op, ErrInvalidAppId)
 		}
 
 		log.Error("unknown err get app", "err", err.Error())
-		return empty, empty, fmt.Errorf("%s:%w", op, ErrAppUnknown)
+		return "", "", fmt.Errorf("%s:%w", op, ErrAppUnknown)
 	}
 
+	// генерируем новую пару токенов
 	tokenGen := jwt.New(
 		user, app, time.Duration(a.cfg.Security.AccessTokenTTL),
 		time.Duration(a.cfg.Security.RefreshTokenTTL), a.keyManager,
@@ -272,8 +291,25 @@ func (a *Auth) Refresh(ctx context.Context, refreshToken string) (string, string
 	tokenPair, err := tokenGen.GenerateTokenPair()
 	if err != nil {
 		log.Error("failed to generate token", "err", err.Error())
-		return empty, empty, fmt.Errorf("%s: %w", op, err)
+		return "", "", fmt.Errorf("%s: %w", op, err)
 	}
+
+	// blackToken := &domain.BlackToken{
+	// 	Token: hashToken,
+	// 	Exp:   claims.Exp,
+	// }
+
+	err = a.tokenRepo.SaveToken(ctx, hashToken, claims.Exp)
+	if err != nil {
+		if errors.Is(err, storage.ErrTokenExpired) {
+			return "", "", fmt.Errorf("%s: %w", op, ErrTokenExpired)
+		}
+
+		log.Error("unknown err revoke token", "err", err)
+		return "", "", fmt.Errorf("%s: %w", op, ErrTokenUnknown)
+	}
+
+	log.Info("user refreshed token", "tokens", tokenPair.AccessToken+", "+tokenPair.RefreshToken)
 
 	return tokenPair.AccessToken, tokenPair.RefreshToken, nil
 }

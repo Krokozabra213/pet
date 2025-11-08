@@ -11,4 +11,7 @@ var (
 	DevRefreshTokenTTL  = "DEV_REFRESH_TOKEN_TTL"
 	ProdRefreshTokenTTL = "PROD_REFRESH_TOKEN_TTL"
 	ContextTimeout      = "CTX_TIMEOUT"
+	RedisAddr           = "REDIS_ADDR"
+	RedisPass           = "REDIS_PASS"
+	RedisCache          = "REDIS_CACHE"
 )

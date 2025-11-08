@@ -11,6 +11,7 @@ services:
       - ./postgres-data:/data/postgres
     ports:
       - "0.0.0.0:5555:5432"
+    restart: unless-stopped
 
   postgres_test:
     container_name: postgres_go_test
@@ -24,4 +25,31 @@ services:
       - ./postgres-data-test:/data/postgres_test
     ports:
       - "0.0.0.0:5556:5432"
+    restart: unless-stopped
       
+  redis:
+    container_name: redis_cache
+    image: redis:7.4
+    volumes:
+      - redis-data:/data
+    ports:
+      - "0.0.0.0:6379:6379"
+    command: redis-server --requirepass redis_password
+    restart: unless-stopped
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: redis_commander
+    ports:
+      - "8081:8081"
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=redis_password
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+volumes:
+  redis-data:
