@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"context"
-	"time"
 
 	"github.com/Krokozabra213/sso/internal/auth/domain"
 	"github.com/Krokozabra213/sso/internal/auth/repository/storage"
@@ -51,23 +50,39 @@ func (p *Postgres) User(
 	return &user, nil
 }
 
+func (p *Postgres) UserByID(
+	ctx context.Context, id int,
+) (*domain.User, error) {
+	var user domain.User
+	result := p.DB.DB.First(&user, "id = ?", id)
+	if result.Error != nil {
+		if notFound(result.Error) {
+			return nil, storage.ErrUserNotFound
+		}
+
+		return nil, storage.ErrUnknown
+	}
+	return &user, nil
+}
+
 func (p *Postgres) IsAdmin(
 	ctx context.Context, userID int64,
 ) (bool, error) {
-	var admin domain.Admin
-	result := p.DB.DB.First(&admin, "user_id = ?", userID)
-	if result.Error != nil {
-		if notFound(result.Error) {
-			return false, nil
-		}
 
+	var exists bool
+	result := p.DB.DB.Raw(
+		"SELECT EXISTS(SELECT 1 FROM admins WHERE user_id = ?)",
+		userID,
+	).Scan(&exists)
+
+	if result.Error != nil {
 		return false, storage.ErrUnknown
 	}
 
-	return true, nil
+	return exists, nil
 }
 
-func (p *Postgres) App(
+func (p *Postgres) AppByID(
 	ctx context.Context, appID int,
 ) (*domain.App, error) {
 
@@ -84,15 +99,10 @@ func (p *Postgres) App(
 }
 
 func (p *Postgres) SaveToken(
-	ctx context.Context, hashToken string, exp time.Time,
+	ctx context.Context, token *domain.BlackToken,
 ) (err error) {
 
-	blackToken := &domain.BlackToken{
-		Token: hashToken,
-		Exp:   exp,
-	}
-
-	result := p.DB.DB.Create(blackToken)
+	result := p.DB.DB.Create(token)
 	if result.Error != nil {
 		if duplicateKey(result.Error) {
 			return storage.ErrTokenRevoked
@@ -100,20 +110,4 @@ func (p *Postgres) SaveToken(
 		return storage.ErrUnknown
 	}
 	return nil
-}
-
-func (p *Postgres) CheckToken(
-	ctx context.Context, hashToken string, exp time.Time,
-) (err error) {
-
-	var token domain.BlackToken
-
-	result := p.DB.DB.Last(&token, "token = ? AND exp = ?", hashToken, exp)
-	if result.Error != nil {
-		if notFound(result.Error) {
-			return nil
-		}
-		return storage.ErrUnknown
-	}
-	return storage.ErrTokenRevoked
 }

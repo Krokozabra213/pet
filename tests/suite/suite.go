@@ -2,11 +2,12 @@ package suite
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"testing"
 	"time"
 
-	"github.com/Krokozabra213/protos/gen/go/sso"
+	"github.com/Krokozabra213/protos/gen/go/proto/sso"
 	"github.com/Krokozabra213/sso/configs/ssoconfig"
 	"github.com/Krokozabra213/sso/internal/auth/domain"
 	"github.com/Krokozabra213/sso/pkg/db"
@@ -19,15 +20,14 @@ type SSOSuite struct {
 	Cfg        *ssoconfig.Config
 	AuthClient sso.AuthClient
 	DB         *db.Db
+	Redis      *db.RDB
 }
 
 func New(t *testing.T) (context.Context, *SSOSuite) {
 	t.Helper()
-	t.Parallel()
 
 	cfg := ssoconfig.Load("local", true)
 
-	// ctx, cancelCtx := context.WithTimeout(context.Background(), time.Duration(cfg.Server.TimeOut))
 	ctx, cancelCtx := context.WithTimeout(context.Background(), 30*time.Second)
 
 	t.Cleanup(func() {
@@ -35,7 +35,8 @@ func New(t *testing.T) (context.Context, *SSOSuite) {
 		cancelCtx()
 	})
 
-	db := db.NewPGDb(cfg.DB.DSN)
+	DB := db.NewPGDb(cfg.DB.DSN)
+	redis := db.NewRedisDB(cfg.Redis.Addr, cfg.Redis.Pass, cfg.Redis.Cache)
 
 	cc, err := grpc.NewClient(
 		grpcAddress(cfg.Server.Host, cfg.Server.Port),
@@ -50,15 +51,77 @@ func New(t *testing.T) (context.Context, *SSOSuite) {
 		T:          t,
 		Cfg:        cfg,
 		AuthClient: sso.NewAuthClient(cc),
-		DB:         db,
+		DB:         DB,
+		Redis:      redis,
 	}
 }
 
 func (s *SSOSuite) CleanupTestData() error {
+	err := s.CleanupUserData()
+	if err != nil {
+		return err
+	}
+	err = s.CleanupBlackTokensData()
+	if err != nil {
+		return err
+	}
+	err = s.CleanupAppsData()
+	if err != nil {
+		return err
+	}
+	err = s.CleanupAdminsData()
+	if err != nil {
+		return err
+	}
+	err = s.CleanupRedis()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *SSOSuite) CleanupUserData() error {
 	// удаляем все строки в таблице users
+	result := s.DB.DB.Exec("TRUNCATE TABLE users CASCADE")
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
+}
+
+// поменять на redis
+func (s *SSOSuite) CleanupBlackTokensData() error {
+	// удаляем все строки в таблице black_tokens
+	result := s.DB.DB.Exec("TRUNCATE TABLE black_tokens CASCADE")
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
+}
+
+func (s *SSOSuite) CleanupAppsData() error {
+	// удаляем все строки в таблице apps
 	result := s.DB.DB.Exec("TRUNCATE TABLE apps CASCADE")
 	if result.Error != nil {
 		return result.Error
+	}
+	return nil
+}
+
+func (s *SSOSuite) CleanupAdminsData() error {
+	// удаляем все строки в таблице admins
+	result := s.DB.DB.Exec("TRUNCATE TABLE admins CASCADE")
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
+}
+
+func (r *SSOSuite) CleanupRedis() error {
+	ctx := context.Background()
+	err := r.Redis.DB.FlushDB(ctx).Err()
+	if err != nil {
+		return fmt.Errorf("failed to flush database: %w", err)
 	}
 	return nil
 }
@@ -72,6 +135,17 @@ func (s *SSOSuite) CreateApp(name string) (int, error) {
 		return 0, result.Error
 	}
 	return int(app.ID), nil
+}
+
+func (s *SSOSuite) CreateAdmin(userID int64) (int64, error) {
+	admin := &domain.Admin{
+		UserID: userID,
+	}
+	result := s.DB.DB.Create(admin)
+	if result.Error != nil {
+		return 0, result.Error
+	}
+	return int64(admin.UserID), nil
 }
 
 func grpcAddress(host, port string) string {

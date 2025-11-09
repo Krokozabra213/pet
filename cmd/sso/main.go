@@ -18,10 +18,10 @@ const (
 )
 
 func main() {
-
 	env := EnvLocal
+	test := true
 
-	cfg := ssoconfig.Load(env, true)
+	cfg := ssoconfig.Load(env, test)
 	log := logger.SetupLogger(env)
 
 	application := app.New(log, cfg)

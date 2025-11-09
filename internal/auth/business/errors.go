@@ -9,6 +9,7 @@ var (
 	ErrPermission         = errors.New("permission error")
 	ErrTokenRevoked       = errors.New("token revoked")
 	ErrHashPassword       = errors.New("hash password error")
+	ErrTokenExpired       = errors.New("token expired")
 )
 
 //domain errors
