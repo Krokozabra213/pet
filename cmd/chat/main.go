@@ -6,8 +6,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/Krokozabra213/sso/configs/ssoconfig"
-	authapp "github.com/Krokozabra213/sso/internal/auth/app"
+	"github.com/Krokozabra213/sso/configs/chatconfig"
+	chatapp "github.com/Krokozabra213/sso/internal/chat/app"
 	"github.com/Krokozabra213/sso/pkg/logger"
 )
 
@@ -21,10 +21,10 @@ func main() {
 	env := EnvLocal
 	test := true
 
-	cfg := ssoconfig.Load(env, test)
+	cfg := chatconfig.Load(env, test)
 	log := logger.SetupLogger(env)
 
-	application := authapp.New(log, cfg)
+	application := chatapp.New(log, cfg)
 
 	go application.GRPCSrv.MustRun()
 

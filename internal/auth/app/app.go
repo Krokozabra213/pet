@@ -1,10 +1,10 @@
-package app
+package authapp
 
 import (
 	"log/slog"
 
 	"github.com/Krokozabra213/sso/configs/ssoconfig"
-	appgrpc "github.com/Krokozabra213/sso/internal/auth/app/grpc"
+	authappgrpc "github.com/Krokozabra213/sso/internal/auth/app/grpc"
 	authBusiness "github.com/Krokozabra213/sso/internal/auth/business"
 	keymanager "github.com/Krokozabra213/sso/internal/auth/lib/key-manager"
 	"github.com/Krokozabra213/sso/internal/auth/repository/storage/postgres"
@@ -13,7 +13,7 @@ import (
 )
 
 type App struct {
-	GRPCSrv *appgrpc.App
+	GRPCSrv *authappgrpc.App
 }
 
 func New(
@@ -33,7 +33,7 @@ func New(
 	business := authBusiness.New(
 		log, cfg, postgres, postgres, postgres, redis, keyManager,
 	)
-	grpcApp := appgrpc.New(log, cfg.Server.Port, business)
+	grpcApp := authappgrpc.New(log, cfg.Server.Port, business)
 
 	return &App{
 		GRPCSrv: grpcApp,

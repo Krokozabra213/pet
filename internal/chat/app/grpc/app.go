@@ -1,11 +1,11 @@
-package authappgrpc
+package chatappgrpc
 
 import (
 	"fmt"
 	"log/slog"
 	"net"
 
-	authgrpcserver "github.com/Krokozabra213/sso/internal/auth/grpc"
+	chatgrpcserver "github.com/Krokozabra213/sso/internal/chat/grpc"
 	"google.golang.org/grpc"
 )
 
@@ -15,11 +15,13 @@ type App struct {
 	port       string
 }
 
-func New(log *slog.Logger, port string, auth authgrpcserver.IBusiness) *App {
+func New(log *slog.Logger, port string, auth chatgrpcserver.IBusiness) *App {
 	gRPCServer := grpc.NewServer(
 		grpc.UnaryInterceptor(ValidationUnaryInterceptor),
+		grpc.MaxConcurrentStreams(10_000), // Максимум одновременных стримов
+		grpc.MaxRecvMsgSize(2*1024*1024),  // Максимальный размер сообщения 2MB
 	)
-	authgrpcserver.Register(gRPCServer, auth)
+	chatgrpcserver.Register(gRPCServer, auth)
 
 	return &App{
 		log:        log,

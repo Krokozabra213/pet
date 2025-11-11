@@ -1,4 +1,4 @@
-package ssoconfig
+package chatconfig
 
 import (
 	"log"
@@ -16,9 +16,9 @@ const (
 
 var (
 	emptyValue        = ""
-	op                = "ssoconfig: "
+	op                = "chatconfig: "
 	defaultHost       = "localhost"
-	defaultPort       = "44044"
+	defaultPort       = "44045"
 	defaultCtxTimeout = 5000
 )
 
@@ -30,10 +30,7 @@ type Config struct {
 }
 
 type Security struct {
-	PrivateKey      []byte
-	Secret          []byte
-	AccessTokenTTL  int
-	RefreshTokenTTL int
+	Secret []byte
 }
 
 func Load(env string, test bool) *Config {
@@ -55,24 +52,9 @@ func Load(env string, test bool) *Config {
 		log.Fatalf("%s%s", op, configs.ErrLoadConfig.Error())
 	}
 
-	privateKeyPath := getEnvOrFatal(PrivateKey)
-	if test {
-		privateKeyPath = filepath.Join(root, privateKeyPath)
-	}
-
-	privateKey, err := PrivateKeyData(privateKeyPath)
-	if err != nil {
-		log.Fatalf("%s%s", op, err.Error())
-	}
-
-	accessTokenTTL, refreshTokenTTL := getEnvPairTokens(env)
-
 	return &Config{
 		Security: &Security{
-			PrivateKey:      privateKey,
-			AccessTokenTTL:  accessTokenTTL,
-			RefreshTokenTTL: refreshTokenTTL,
-			Secret:          []byte(getEnvOrFatal(Secret)),
+			Secret: []byte(getEnvOrFatal(Secret)),
 		},
 		Server: &configs.Server{
 			Host:    getEnvDefault(HOST, defaultHost),

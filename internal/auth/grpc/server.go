@@ -1,4 +1,4 @@
-package authgrpc
+package authgrpcserver
 
 import (
 	"context"

@@ -1,4 +1,4 @@
-package authappgrpc
+package chatappgrpc
 
 import (
 	"context"
