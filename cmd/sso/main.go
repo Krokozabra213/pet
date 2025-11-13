@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -18,22 +19,23 @@ const (
 )
 
 func main() {
-	env := EnvLocal
 	test := true
+	env := EnvLocal
 
-	cfg := ssoconfig.Load(env, test)
 	log := logger.SetupLogger(env)
+	cfg := ssoconfig.Load(env, test)
+	log.Info("config", slog.String("ssoconfig", fmt.Sprintf("%#v", cfg)))
 
-	application := app.New(log, cfg)
-
-	go application.GRPCSrv.MustRun()
+	builder := app.NewAppBuilder(cfg, log)
+	appFactory := app.NewAppFactory(builder)
+	application := appFactory.Create()
+	go application.MustRun()
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
 	sign := <-stop
 	log.Info("stopping application", slog.String("signal", sign.String()))
 
-	application.GRPCSrv.Stop()
-
+	application.Stop()
 	log.Info("application stopped")
 }
