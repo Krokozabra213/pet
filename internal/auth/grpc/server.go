@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/Krokozabra213/protos/gen/go/proto/sso"
-	"google.golang.org/grpc"
 )
 
 type IBusiness interface {
@@ -22,16 +21,18 @@ type IBusiness interface {
 	)
 }
 
-type serverAPI struct {
+type ServerAPI struct {
 	sso.UnimplementedAuthServer
 	Business IBusiness
 }
 
-func Register(grpc *grpc.Server, business IBusiness) {
-	sso.RegisterAuthServer(grpc, &serverAPI{Business: business})
+func New(business IBusiness) *ServerAPI {
+	return &ServerAPI{
+		Business: business,
+	}
 }
 
-func (s *serverAPI) Register(
+func (s *ServerAPI) Register(
 	ctx context.Context,
 	r *sso.RegisterRequest,
 ) (*sso.RegisterResponse, error) {
@@ -42,7 +43,7 @@ func (s *serverAPI) Register(
 	}, err
 }
 
-func (s *serverAPI) Login(
+func (s *ServerAPI) Login(
 	ctx context.Context,
 	r *sso.LoginRequest,
 ) (*sso.LoginResponse, error) {
@@ -54,7 +55,7 @@ func (s *serverAPI) Login(
 	}, err
 }
 
-func (s *serverAPI) Logout(
+func (s *ServerAPI) Logout(
 	ctx context.Context,
 	r *sso.LogoutRequest,
 ) (*sso.LogoutResponse, error) {
@@ -65,7 +66,7 @@ func (s *serverAPI) Logout(
 	}, err
 }
 
-func (s *serverAPI) Refresh(
+func (s *ServerAPI) Refresh(
 	ctx context.Context,
 	r *sso.RefreshRequest,
 ) (*sso.RefreshResponse, error) {
@@ -77,7 +78,7 @@ func (s *serverAPI) Refresh(
 	}, err
 }
 
-func (s *serverAPI) IsAdmin(
+func (s *ServerAPI) IsAdmin(
 	ctx context.Context,
 	r *sso.IsAdminRequest,
 ) (*sso.IsAdminResponse, error) {
@@ -88,7 +89,7 @@ func (s *serverAPI) IsAdmin(
 	}, err
 }
 
-func (s *serverAPI) GetPublicKey(
+func (s *ServerAPI) GetPublicKey(
 	ctx context.Context,
 	r *sso.PublicKeyRequest,
 ) (*sso.PublicKeyResponse, error) {
