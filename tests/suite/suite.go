@@ -10,7 +10,8 @@ import (
 	"github.com/Krokozabra213/protos/gen/go/proto/sso"
 	"github.com/Krokozabra213/sso/configs/ssoconfig"
 	"github.com/Krokozabra213/sso/internal/auth/domain"
-	"github.com/Krokozabra213/sso/pkg/db"
+	postgrespet "github.com/Krokozabra213/sso/pkg/db/postgres-pet"
+	redispet "github.com/Krokozabra213/sso/pkg/db/redis-pet"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -19,8 +20,8 @@ type SSOSuite struct {
 	*testing.T
 	Cfg        *ssoconfig.Config
 	AuthClient sso.AuthClient
-	DB         *db.Db
-	Redis      *db.RDB
+	DB         *postgrespet.PGDB
+	Redis      *redispet.RDB
 }
 
 func New(t *testing.T) (context.Context, *SSOSuite) {
@@ -35,8 +36,8 @@ func New(t *testing.T) (context.Context, *SSOSuite) {
 		cancelCtx()
 	})
 
-	DB := db.NewPGDb(cfg.DB.DSN)
-	redis := db.NewRedisDB(cfg.Redis.Addr, cfg.Redis.Pass, cfg.Redis.Cache)
+	DB := postgrespet.NewPGDB(cfg.DB.DSN)
+	redis := redispet.NewRedisDB(cfg.Redis.Addr, cfg.Redis.Pass, cfg.Redis.Cache)
 
 	cc, err := grpc.NewClient(
 		grpcAddress(cfg.Server.Host, cfg.Server.Port),
@@ -82,7 +83,7 @@ func (s *SSOSuite) CleanupTestData() error {
 
 func (s *SSOSuite) CleanupUserData() error {
 	// удаляем все строки в таблице users
-	result := s.DB.DB.Exec("TRUNCATE TABLE users CASCADE")
+	result := s.DB.Client.Exec("TRUNCATE TABLE users CASCADE")
 	if result.Error != nil {
 		return result.Error
 	}
@@ -92,7 +93,7 @@ func (s *SSOSuite) CleanupUserData() error {
 // поменять на redis
 func (s *SSOSuite) CleanupBlackTokensData() error {
 	// удаляем все строки в таблице black_tokens
-	result := s.DB.DB.Exec("TRUNCATE TABLE black_tokens CASCADE")
+	result := s.DB.Client.Exec("TRUNCATE TABLE black_tokens CASCADE")
 	if result.Error != nil {
 		return result.Error
 	}
@@ -101,7 +102,7 @@ func (s *SSOSuite) CleanupBlackTokensData() error {
 
 func (s *SSOSuite) CleanupAppsData() error {
 	// удаляем все строки в таблице apps
-	result := s.DB.DB.Exec("TRUNCATE TABLE apps CASCADE")
+	result := s.DB.Client.Exec("TRUNCATE TABLE apps CASCADE")
 	if result.Error != nil {
 		return result.Error
 	}
@@ -110,7 +111,7 @@ func (s *SSOSuite) CleanupAppsData() error {
 
 func (s *SSOSuite) CleanupAdminsData() error {
 	// удаляем все строки в таблице admins
-	result := s.DB.DB.Exec("TRUNCATE TABLE admins CASCADE")
+	result := s.DB.Client.Exec("TRUNCATE TABLE admins CASCADE")
 	if result.Error != nil {
 		return result.Error
 	}
@@ -119,7 +120,7 @@ func (s *SSOSuite) CleanupAdminsData() error {
 
 func (r *SSOSuite) CleanupRedis() error {
 	ctx := context.Background()
-	err := r.Redis.DB.FlushDB(ctx).Err()
+	err := r.Redis.Client.FlushDB(ctx).Err()
 	if err != nil {
 		return fmt.Errorf("failed to flush database: %w", err)
 	}
@@ -130,7 +131,7 @@ func (s *SSOSuite) CreateApp(name string) (int, error) {
 	app := &domain.App{
 		Name: name,
 	}
-	result := s.DB.DB.Create(app)
+	result := s.DB.Client.Create(app)
 	if result.Error != nil {
 		return 0, result.Error
 	}
@@ -141,7 +142,7 @@ func (s *SSOSuite) CreateAdmin(userID int64) (int64, error) {
 	admin := &domain.Admin{
 		UserID: userID,
 	}
-	result := s.DB.DB.Create(admin)
+	result := s.DB.Client.Create(admin)
 	if result.Error != nil {
 		return 0, result.Error
 	}
