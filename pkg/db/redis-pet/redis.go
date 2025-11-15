@@ -1,4 +1,4 @@
-package db
+package redispet
 
 import (
 	"context"
@@ -8,25 +8,27 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+const ctxTimeout = 5 * time.Second
+
 type RDB struct {
-	DB *redis.Client
+	Client *redis.Client
 }
 
 func NewRedisDB(addr, password string, db int) *RDB {
-	rdb := redis.NewClient(&redis.Options{
+	client := redis.NewClient(&redis.Options{
 		Addr:     addr,
 		Password: password,
 		DB:       db,
 	})
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), ctxTimeout)
 	defer cancel()
 
-	if err := rdb.Ping(ctx).Err(); err != nil {
+	if err := client.Ping(ctx).Err(); err != nil {
 		panic(fmt.Sprintf("Redis connection failed: %v", err))
 	}
 
 	return &RDB{
-		DB: rdb,
+		Client: client,
 	}
 }

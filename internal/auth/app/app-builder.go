@@ -11,7 +11,8 @@ import (
 	keymanager "github.com/Krokozabra213/sso/internal/auth/lib/key-manager"
 	"github.com/Krokozabra213/sso/internal/auth/repository/storage/postgres"
 	"github.com/Krokozabra213/sso/internal/auth/repository/storage/redis"
-	"github.com/Krokozabra213/sso/pkg/db"
+	postgrespet "github.com/Krokozabra213/sso/pkg/db/postgres-pet"
+	redispet "github.com/Krokozabra213/sso/pkg/db/redis-pet"
 )
 
 type AuthAppBuilder struct {
@@ -27,27 +28,27 @@ func NewAppBuilder(cfg *ssoconfig.Config, log *slog.Logger) *AuthAppBuilder {
 }
 
 // connects
-func (builder *AuthAppBuilder) DBConn() *db.Db {
-	return db.NewPGDb(builder.cfg.DB.DSN)
+func (builder *AuthAppBuilder) DBConn() *postgrespet.PGDB {
+	return postgrespet.NewPGDB(builder.cfg.DB.DSN)
 }
 
-func (builder *AuthAppBuilder) NoSQLDBConn() *db.RDB {
-	return db.NewRedisDB(
+func (builder *AuthAppBuilder) NoSQLDBConn() *redispet.RDB {
+	return redispet.NewRedisDB(
 		builder.cfg.Redis.Addr, builder.cfg.Redis.Pass, builder.cfg.Redis.Cache,
 	)
 }
 
 // repositories
-func (builder *AuthAppBuilder) UserProvider(connect *db.Db) authBusiness.IUserProvider {
-	return postgres.New(connect)
+func (builder *AuthAppBuilder) UserProvider(connect *postgrespet.PGDB) authBusiness.IUserProvider {
+	return postgres.New(connect, builder.log)
 }
 
-func (builder *AuthAppBuilder) AppProvider(connect *db.Db) authBusiness.IAppProvider {
-	return postgres.New(connect)
+func (builder *AuthAppBuilder) AppProvider(connect *postgrespet.PGDB) authBusiness.IAppProvider {
+	return postgres.New(connect, builder.log)
 }
 
-func (builder *AuthAppBuilder) TokenProvider(connect *db.RDB) authBusiness.ITokenProvider {
-	return redis.New(connect)
+func (builder *AuthAppBuilder) TokenProvider(connect *redispet.RDB) authBusiness.ITokenProvider {
+	return redis.New(connect, builder.log)
 }
 
 // libraries

@@ -240,7 +240,7 @@ func (a *Auth) Refresh(ctx context.Context, refreshToken string) (string, string
 	// хешируем токен для безопасного хранения в базе
 	hashToken := hmac.HashJWTTokenHMAC(refreshToken, a.cfg.Security.Secret)
 	exist, err := a.tokenRepo.CheckToken(ctx, hashToken)
-	fmt.Println(exist, err)
+
 	if err != nil {
 		log.Error("check token err", "err", err)
 		return "", "", fmt.Errorf("%s: %w", op, ErrTokenUnknown)
@@ -289,11 +289,6 @@ func (a *Auth) Refresh(ctx context.Context, refreshToken string) (string, string
 		log.Error("failed to generate token", "err", err.Error())
 		return "", "", fmt.Errorf("%s: %w", op, err)
 	}
-
-	// blackToken := &domain.BlackToken{
-	// 	Token: hashToken,
-	// 	Exp:   claims.Exp,
-	// }
 
 	err = a.tokenRepo.SaveToken(ctx, hashToken, claims.Exp)
 	if err != nil {

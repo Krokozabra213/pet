@@ -2,29 +2,44 @@ package redis
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
 	"github.com/Krokozabra213/sso/internal/auth/repository/storage"
-	"github.com/Krokozabra213/sso/pkg/db"
+	redispet "github.com/Krokozabra213/sso/pkg/db/redis-pet"
 )
 
 type Redis struct {
-	RDB *db.RDB
+	RDB *redispet.RDB
+	log *slog.Logger
 }
 
-func New(RDB *db.RDB) *Redis {
-	return &Redis{RDB: RDB}
+func New(RDB *redispet.RDB, log *slog.Logger) *Redis {
+	return &Redis{
+		RDB: RDB,
+		log: log,
+	}
 }
 
 func (r *Redis) SaveToken(ctx context.Context, token string, expiresAt time.Time) error {
+
+	const op = "redis.SaveToken"
+	log := r.log.With(
+		slog.String("op", op),
+	)
+
 	expiration := time.Until(expiresAt)
 	if expiration <= 0 {
 		return storage.ErrTokenExpired
 	}
+	log.Error("repository error", "err", storage.ErrTokenExpired)
 
-	err := r.RDB.DB.SetEx(ctx, token, "", expiration).Err()
+	err := r.RDB.Client.SetEx(ctx, token, "", expiration).Err()
 
-	if err != nil {
+	customErr := redispet.ErrorWrapper(err)
+	if customErr != nil {
+		log.Error("redis error", "err", customErr.Error())
+		err = ErrorFactory(customErr)
 		return err
 	}
 
@@ -32,8 +47,17 @@ func (r *Redis) SaveToken(ctx context.Context, token string, expiresAt time.Time
 }
 
 func (r *Redis) CheckToken(ctx context.Context, token string) (bool, error) {
-	exists, err := r.RDB.DB.Exists(ctx, token).Result()
-	if err != nil {
+
+	const op = "redis.CheckToken"
+	log := r.log.With(
+		slog.String("op", op),
+	)
+
+	exists, err := r.RDB.Client.Exists(ctx, token).Result()
+	customErr := redispet.ErrorWrapper(err)
+	if customErr != nil {
+		log.Error("redis error", "err", customErr.Error())
+		err = ErrorFactory(customErr)
 		return false, err
 	}
 

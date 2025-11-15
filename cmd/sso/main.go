@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"encoding/json"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -24,7 +24,9 @@ func main() {
 
 	log := logger.SetupLogger(env)
 	cfg := ssoconfig.Load(env, test)
-	log.Info("config", slog.String("ssoconfig", fmt.Sprintf("%#v", cfg)))
+
+	cfgJSON, _ := json.MarshalIndent(cfg, "", "  ")
+	log.Info("loaded config", slog.String("config", string(cfgJSON)))
 
 	builder := app.NewAppBuilder(cfg, log)
 	appFactory := app.NewAppFactory(builder)
