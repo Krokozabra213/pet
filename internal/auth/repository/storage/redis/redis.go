@@ -5,7 +5,6 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/Krokozabra213/sso/internal/auth/repository/storage"
 	redispet "github.com/Krokozabra213/sso/pkg/db/redis-pet"
 )
 
@@ -30,9 +29,9 @@ func (r *Redis) SaveToken(ctx context.Context, token string, expiresAt time.Time
 
 	expiration := time.Until(expiresAt)
 	if expiration <= 0 {
-		return storage.ErrTokenExpired
+		return ErrTokenExpired
 	}
-	log.Error("repository error", "err", storage.ErrTokenExpired)
+	log.Error("repository error", "err", ErrTokenExpired)
 
 	err := r.RDB.Client.SetEx(ctx, token, "", expiration).Err()
 
