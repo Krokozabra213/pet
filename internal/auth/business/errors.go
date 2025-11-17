@@ -10,6 +10,7 @@ var (
 	ErrTokenRevoked       = errors.New("token revoked")
 	ErrHashPassword       = errors.New("hash password error")
 	ErrTokenExpired       = errors.New("token expired")
+	ErrTimeout            = errors.New("timeout request")
 )
 
 //domain errors

@@ -3,7 +3,6 @@ package authBusiness
 import (
 	"context"
 	"crypto/rsa"
-	"errors"
 	"fmt"
 	"log/slog"
 	"time"
@@ -74,6 +73,7 @@ func (a *Auth) RegisterNewUser(
 	log := a.log.With(
 		slog.String("op", op),
 	)
+	log.Info("user register")
 
 	passHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
@@ -81,14 +81,14 @@ func (a *Auth) RegisterNewUser(
 		return 0, fmt.Errorf("%s: %w", op, ErrHashPassword)
 	}
 
+	errorMap := map[error]error{
+		postgres.ErrPGDuplicate: ErrUserExist,
+		postgres.ErrContext:     ErrTimeout,
+	}
+
 	id, err := a.userProvider.SaveUser(ctx, username, string(passHash))
 	if err != nil {
-		if errors.Is(err, postgres.ErrPGDuplicate) {
-			return 0, fmt.Errorf("%s: %w", op, ErrUserExist)
-		}
-
-		log.Error("unknown err save user", "err", err)
-		return 0, fmt.Errorf("%s: %w", op, ErrUserUnknown)
+		return 0, ErrorGateway(op, log, err, errorMap, ErrUserUnknown)
 	}
 
 	return id, nil
@@ -104,28 +104,26 @@ func (a *Auth) Login(
 	log := a.log.With(
 		slog.String("op", op),
 	)
-
 	log.Info("user login")
+
+	errorMap := map[error]error{
+		postgres.ErrPGNotFound: ErrInvalidAppId,
+		postgres.ErrContext:    ErrTimeout,
+	}
 
 	app, err := a.appProvider.AppByID(ctx, appID)
 	if err != nil {
-		if errors.Is(err, postgres.ErrPGNotFound) {
-			return "", "", fmt.Errorf("%s: %w", op, ErrInvalidAppId)
-		}
+		return "", "", ErrorGateway(op, log, err, errorMap, ErrAppUnknown)
+	}
 
-		log.Error("unknown err get app", "err", err.Error())
-		return "", "", fmt.Errorf("%s:%w", op, ErrAppUnknown)
+	errorMap = map[error]error{
+		postgres.ErrPGNotFound: ErrInvalidCredentials,
+		postgres.ErrContext:    ErrTimeout,
 	}
 
 	user, err := a.userProvider.User(ctx, username)
-
 	if err != nil {
-		if errors.Is(err, postgres.ErrPGNotFound) {
-			return "", "", fmt.Errorf("%s: %w", op, ErrInvalidCredentials)
-		}
-
-		log.Error("unknown err get user", "err", err.Error())
-		return "", "", fmt.Errorf("%s: %w", op, ErrUserUnknown)
+		return "", "", ErrorGateway(op, log, err, errorMap, ErrUserUnknown)
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
@@ -158,28 +156,27 @@ func (a *Auth) Logout(
 	log := a.log.With(
 		slog.String("op", op),
 	)
-
 	log.Info("user logout")
 
 	claims, err := jwt.ParseRefresh(refreshToken, a.keyManager)
 	if err != nil {
-		log.Error("parse token error", "err", err)
+		log.Error("failed parse token", "err", err)
 		return false, fmt.Errorf("%s: %w", op, err)
 	}
 
 	hashToken := hmac.HashJWTTokenHMAC(refreshToken, a.cfg.Security.Secret)
 
-	err = a.tokenRepo.SaveToken(ctx, hashToken, claims.Exp)
-	if err != nil {
-		if errors.Is(err, redis.ErrTokenExpired) {
-			return false, fmt.Errorf("%s: %w", op, ErrTokenExpired)
-		}
-
-		log.Error("unknown err revoke token", "err", err)
-		return false, fmt.Errorf("%s: %w", op, ErrTokenUnknown)
+	errorMap := map[error]error{
+		redis.ErrTokenExpired: ErrTokenExpired,
+		postgres.ErrContext:   ErrTimeout,
 	}
 
+	err = a.tokenRepo.SaveToken(ctx, hashToken, claims.Exp)
+	if err != nil {
+		return false, ErrorGateway(op, log, err, errorMap, ErrTokenUnknown)
+	}
 	log.Info("user logouting")
+
 	return true, nil
 }
 
@@ -192,10 +189,13 @@ func (a *Auth) IsAdmin(ctx context.Context, userID int64) (bool, error) {
 		slog.String("op", op),
 	)
 
+	errorMap := map[error]error{
+		postgres.ErrContext: ErrTimeout,
+	}
+
 	isAdmin, err := a.userProvider.IsAdmin(ctx, userID)
 	if err != nil {
-		log.Error("unknown get isadmin error", "err", err)
-		return false, fmt.Errorf("%s: %w", op, ErrUserUnknown)
+		return false, ErrorGateway(op, log, err, errorMap, ErrUserUnknown)
 	}
 
 	if !isAdmin {
@@ -214,14 +214,14 @@ func (a *Auth) PublicKey(ctx context.Context, appID int) (string, error) {
 		slog.String("op", op),
 	)
 
+	errorMap := map[error]error{
+		postgres.ErrPGNotFound: ErrInvalidAppId,
+		postgres.ErrContext:    ErrTimeout,
+	}
+
 	_, err := a.appProvider.AppByID(ctx, appID)
 	if err != nil {
-		if errors.Is(err, postgres.ErrPGNotFound) {
-			return "", fmt.Errorf("%s: %w", op, ErrInvalidAppId)
-		}
-
-		log.Error("unknown get app error", "err", err)
-		return "", fmt.Errorf("%s: %w", op, ErrAppUnknown)
+		return "", ErrorGateway(op, log, err, errorMap, ErrAppUnknown)
 	}
 
 	return a.keyManager.GetPublicKeyPEM()
@@ -240,8 +240,8 @@ func (a *Auth) Refresh(ctx context.Context, refreshToken string) (string, string
 
 	// хешируем токен для безопасного хранения в базе
 	hashToken := hmac.HashJWTTokenHMAC(refreshToken, a.cfg.Security.Secret)
-	exist, err := a.tokenRepo.CheckToken(ctx, hashToken)
 
+	exist, err := a.tokenRepo.CheckToken(ctx, hashToken)
 	if err != nil {
 		log.Error("check token err", "err", err)
 		return "", "", fmt.Errorf("%s: %w", op, ErrTokenUnknown)
@@ -257,26 +257,26 @@ func (a *Auth) Refresh(ctx context.Context, refreshToken string) (string, string
 		return "", "", fmt.Errorf("%s: %w", op, err)
 	}
 
+	errorMap := map[error]error{
+		postgres.ErrPGNotFound: ErrInvalidCredentials,
+		postgres.ErrContext:    ErrTimeout,
+	}
+
 	// проверяем наличие пользователя с таким id
 	user, err := a.userProvider.UserByID(ctx, claims.UserID)
 	if err != nil {
-		if errors.Is(err, postgres.ErrPGNotFound) {
-			return "", "", fmt.Errorf("%s: %w", op, ErrInvalidCredentials)
-		}
+		return "", "", ErrorGateway(op, log, err, errorMap, ErrUserUnknown)
+	}
 
-		log.Error("unknown err get user", "err", err.Error())
-		return "", "", fmt.Errorf("%s: %w", op, ErrUserUnknown)
+	errorMap = map[error]error{
+		postgres.ErrPGNotFound: ErrInvalidAppId,
+		postgres.ErrContext:    ErrTimeout,
 	}
 
 	// проверяем наличие приложения с таким id
 	app, err := a.appProvider.AppByID(ctx, claims.AppID)
 	if err != nil {
-		if errors.Is(err, postgres.ErrPGNotFound) {
-			return "", "", fmt.Errorf("%s: %w", op, ErrInvalidAppId)
-		}
-
-		log.Error("unknown err get app", "err", err.Error())
-		return "", "", fmt.Errorf("%s:%w", op, ErrAppUnknown)
+		return "", "", ErrorGateway(op, log, err, errorMap, ErrAppUnknown)
 	}
 
 	// генерируем новую пару токенов
@@ -291,16 +291,15 @@ func (a *Auth) Refresh(ctx context.Context, refreshToken string) (string, string
 		return "", "", fmt.Errorf("%s: %w", op, err)
 	}
 
-	err = a.tokenRepo.SaveToken(ctx, hashToken, claims.Exp)
-	if err != nil {
-		if errors.Is(err, redis.ErrTokenExpired) {
-			return "", "", fmt.Errorf("%s: %w", op, ErrTokenExpired)
-		}
-
-		log.Error("unknown err revoke token", "err", err)
-		return "", "", fmt.Errorf("%s: %w", op, ErrTokenUnknown)
+	errorMap = map[error]error{
+		redis.ErrTokenExpired: ErrTokenExpired,
+		postgres.ErrContext:   ErrTimeout,
 	}
 
+	err = a.tokenRepo.SaveToken(ctx, hashToken, claims.Exp)
+	if err != nil {
+		return "", "", ErrorGateway(op, log, err, errorMap, ErrTokenUnknown)
+	}
 	log.Info("user refreshed token", "tokens", tokenPair.AccessToken+", "+tokenPair.RefreshToken)
 
 	return tokenPair.AccessToken, tokenPair.RefreshToken, nil

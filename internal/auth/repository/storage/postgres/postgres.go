@@ -3,9 +3,14 @@ package postgres
 import (
 	"context"
 	"log/slog"
+	"time"
 
 	"github.com/Krokozabra213/sso/internal/auth/domain"
 	postgrespet "github.com/Krokozabra213/sso/pkg/db/postgres-pet"
+)
+
+const (
+	ctxTimeout = 5 * time.Second
 )
 
 type Postgres struct {
@@ -27,13 +32,25 @@ func (p *Postgres) SaveUser(
 	const op = "postgres.SaveUser"
 	log := p.log.With(
 		slog.String("op", op),
+		slog.String("username", username),
 	)
+
+	if _, hasDeadline := ctx.Deadline(); !hasDeadline {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, ctxTimeout)
+		defer cancel()
+	}
+
+	if ctx.Err() != nil {
+		log.Error("context error", "err", ctx.Err())
+		return 0, ErrContext
+	}
 
 	user := &domain.User{
 		Username: username,
 		Password: pass,
 	}
-	result := p.DB.Client.Create(user)
+	result := p.DB.Client.WithContext(ctx).Create(user)
 
 	customErr := postgrespet.ErrorWrapper(result.Error)
 	if customErr != nil {
@@ -41,6 +58,8 @@ func (p *Postgres) SaveUser(
 		err := ErrorFactory(customErr)
 		return 0, err
 	}
+
+	log.Info("user saved successfully", "user_id", user.ID)
 	return user.ID, nil
 }
 
@@ -53,8 +72,19 @@ func (p *Postgres) User(
 		slog.String("op", op),
 	)
 
+	if _, hasDeadline := ctx.Deadline(); !hasDeadline {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, ctxTimeout)
+		defer cancel()
+	}
+
+	if ctx.Err() != nil {
+		log.Error("context error", "err", ctx.Err())
+		return nil, ErrContext
+	}
+
 	var user domain.User
-	result := p.DB.Client.First(&user, "username = ?", username)
+	result := p.DB.Client.WithContext(ctx).First(&user, "username = ?", username)
 
 	customErr := postgrespet.ErrorWrapper(result.Error)
 	if customErr != nil {
@@ -74,8 +104,19 @@ func (p *Postgres) UserByID(
 		slog.String("op", op),
 	)
 
+	if _, hasDeadline := ctx.Deadline(); !hasDeadline {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, ctxTimeout)
+		defer cancel()
+	}
+
+	if ctx.Err() != nil {
+		log.Error("context error", "err", ctx.Err())
+		return nil, ErrContext
+	}
+
 	var user domain.User
-	result := p.DB.Client.First(&user, "id = ?", id)
+	result := p.DB.Client.WithContext(ctx).First(&user, "id = ?", id)
 
 	customErr := postgrespet.ErrorWrapper(result.Error)
 	if customErr != nil {
@@ -95,8 +136,19 @@ func (p *Postgres) IsAdmin(
 		slog.String("op", op),
 	)
 
+	if _, hasDeadline := ctx.Deadline(); !hasDeadline {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, ctxTimeout)
+		defer cancel()
+	}
+
+	if ctx.Err() != nil {
+		log.Error("context error", "err", ctx.Err())
+		return false, ErrContext
+	}
+
 	var exists bool
-	result := p.DB.Client.Raw(
+	result := p.DB.Client.WithContext(ctx).Raw(
 		"SELECT EXISTS(SELECT 1 FROM admins WHERE user_id = ?)",
 		userID,
 	).Scan(&exists)
@@ -119,8 +171,19 @@ func (p *Postgres) AppByID(
 		slog.String("op", op),
 	)
 
+	if _, hasDeadline := ctx.Deadline(); !hasDeadline {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, ctxTimeout)
+		defer cancel()
+	}
+
+	if ctx.Err() != nil {
+		log.Error("context error", "err", ctx.Err())
+		return nil, ErrContext
+	}
+
 	var app domain.App
-	result := p.DB.Client.First(&app, "id = ?", appID)
+	result := p.DB.Client.WithContext(ctx).First(&app, "id = ?", appID)
 
 	customErr := postgrespet.ErrorWrapper(result.Error)
 	if customErr != nil {
@@ -140,7 +203,18 @@ func (p *Postgres) SaveToken(
 		slog.String("op", op),
 	)
 
-	result := p.DB.Client.Create(token)
+	if _, hasDeadline := ctx.Deadline(); !hasDeadline {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, ctxTimeout)
+		defer cancel()
+	}
+
+	if ctx.Err() != nil {
+		log.Error("context error", "err", ctx.Err())
+		return ErrContext
+	}
+
+	result := p.DB.Client.WithContext(ctx).Create(token)
 
 	customErr := postgrespet.ErrorWrapper(result.Error)
 	if customErr != nil {

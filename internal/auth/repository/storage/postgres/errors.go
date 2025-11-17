@@ -7,5 +7,6 @@ var (
 	ErrPGDuplicate  = errors.New("duplicate key error")
 	ErrPGNotFound   = errors.New("not found error")
 	ErrPGInternal   = errors.New("internal error")
+	ErrContext      = errors.New("context error")
 	ErrUnknown      = errors.New("unknown error")
 )

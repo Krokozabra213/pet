@@ -9,5 +9,6 @@ var (
 	ErrRedisConnection = errors.New("connect error")
 	ErrRedisInternal   = errors.New("internal error")
 	ErrTokenExpired    = errors.New("token already expired")
+	ErrContext         = errors.New("context error")
 	ErrUnknown         = errors.New("unknown error")
 )
