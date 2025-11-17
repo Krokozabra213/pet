@@ -5,18 +5,19 @@ import (
 	appgrpc "github.com/Krokozabra213/sso/internal/auth/app/grpc"
 	authBusiness "github.com/Krokozabra213/sso/internal/auth/business"
 	authgrpc "github.com/Krokozabra213/sso/internal/auth/grpc"
-	"github.com/Krokozabra213/sso/pkg/db"
+	postgrespet "github.com/Krokozabra213/sso/pkg/db/postgres-pet"
+	redispet "github.com/Krokozabra213/sso/pkg/db/redis-pet"
 )
 
 type IAppBuilder interface {
 	// Connects
-	DBConn() *db.Db
-	NoSQLDBConn() *db.RDB
+	DBConn() *postgrespet.PGDB
+	NoSQLDBConn() *redispet.RDB
 
 	// Repositories
-	UserProvider(connect *db.Db) authBusiness.IUserProvider
-	AppProvider(connect *db.Db) authBusiness.IAppProvider
-	TokenProvider(connect *db.RDB) authBusiness.ITokenProvider
+	UserProvider(connect *postgrespet.PGDB) authBusiness.IUserProvider
+	AppProvider(connect *postgrespet.PGDB) authBusiness.IAppProvider
+	TokenProvider(connect *redispet.RDB) authBusiness.ITokenProvider
 
 	// Libraries
 	KeyManager() authBusiness.IKeyManager
