@@ -7,10 +7,14 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	CodeUniqueViolation = "23505"
+)
+
 func duplicateKey(err error) bool {
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) {
-		if pgErr.Code == "23505" { // unique_violation
+		if pgErr.Code == CodeUniqueViolation {
 			return true
 		}
 	}
@@ -18,8 +22,5 @@ func duplicateKey(err error) bool {
 }
 
 func notFound(err error) bool {
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return true
-	}
-	return false
+	return errors.Is(err, gorm.ErrRecordNotFound)
 }
