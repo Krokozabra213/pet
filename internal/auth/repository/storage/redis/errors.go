@@ -8,5 +8,6 @@ var (
 	ErrRedisOOM        = errors.New("out of memory error")
 	ErrRedisConnection = errors.New("connect error")
 	ErrRedisInternal   = errors.New("internal error")
+	ErrTokenExpired    = errors.New("token already expired")
 	ErrUnknown         = errors.New("unknown error")
 )

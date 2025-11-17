@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/Krokozabra213/protos/gen/go/proto/sso"
+	authBusiness "github.com/Krokozabra213/sso/internal/auth/business"
 	"github.com/Krokozabra213/sso/tests/suite"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -23,7 +24,7 @@ func TestRegisterLogin_Errors(t *testing.T) {
 	})
 
 	require.Error(t, err)
-	assert.ErrorContains(t, err, "invalid app id")
+	assert.ErrorContains(t, err, authBusiness.ErrInvalidAppId.Error())
 	assert.Empty(t, respPublicKey.GetPublicKey())
 
 	username := randomUsername()
@@ -47,7 +48,7 @@ func TestRegisterLogin_Errors(t *testing.T) {
 	})
 	require.Error(t, err)
 	assert.Empty(t, respReg.GetUserId())
-	assert.ErrorContains(t, err, "user already exists")
+	assert.ErrorContains(t, err, authBusiness.ErrUserExist.Error())
 
 	// проверка аутентификации на ошибки
 	// проверка на неправильный appID
@@ -59,7 +60,7 @@ func TestRegisterLogin_Errors(t *testing.T) {
 	require.Error(t, err)
 	assert.Empty(t, respLogin.GetAccessToken())
 	assert.Empty(t, respLogin.GetRefreshToken())
-	assert.ErrorContains(t, err, "invalid app id")
+	assert.ErrorContains(t, err, authBusiness.ErrInvalidAppId.Error())
 
 	// создаем приложение и производим аутентификацию
 	appID, err = st.CreateApp("test")
@@ -75,7 +76,7 @@ func TestRegisterLogin_Errors(t *testing.T) {
 	require.Error(t, err)
 	assert.Empty(t, respLogin.GetAccessToken())
 	assert.Empty(t, respLogin.GetRefreshToken())
-	assert.ErrorContains(t, err, "invalid credentials")
+	assert.ErrorContains(t, err, authBusiness.ErrInvalidCredentials.Error())
 
 	// аутентификация с неправильным password
 	respLogin, err = st.AuthClient.Login(ctx, &sso.LoginRequest{
@@ -86,7 +87,7 @@ func TestRegisterLogin_Errors(t *testing.T) {
 	require.Error(t, err)
 	assert.Empty(t, respLogin.GetAccessToken())
 	assert.Empty(t, respLogin.GetRefreshToken())
-	assert.ErrorContains(t, err, "invalid credentials")
+	assert.ErrorContains(t, err, authBusiness.ErrInvalidCredentials.Error())
 
 	// аутентификация
 	respLogin, err = st.AuthClient.Login(ctx, &sso.LoginRequest{
@@ -105,7 +106,7 @@ func TestRegisterLogin_Errors(t *testing.T) {
 	})
 	require.Error(t, err)
 	assert.Equal(t, respIsAdmin.GetIsAdmin(), false)
-	assert.ErrorContains(t, err, "permission error")
+	assert.ErrorContains(t, err, authBusiness.ErrPermission.Error())
 
 	// создаем рандомный appID для проверки getPublicKey
 	fakeAppID := randomID(1, 100_000)
@@ -114,7 +115,7 @@ func TestRegisterLogin_Errors(t *testing.T) {
 	})
 	require.Error(t, err)
 	assert.Empty(t, respPublicKey.GetPublicKey())
-	assert.ErrorContains(t, err, "invalid app id")
+	assert.ErrorContains(t, err, authBusiness.ErrInvalidAppId.Error())
 
 	// совершаем аутентификацию для проверки Refresh
 	respLogin, err = st.AuthClient.Login(ctx, &sso.LoginRequest{
@@ -136,7 +137,7 @@ func TestRegisterLogin_Errors(t *testing.T) {
 	require.Error(t, err)
 	assert.Empty(t, respRefresh.GetAccessToken())
 	assert.Empty(t, respRefresh.GetRefreshToken())
-	assert.ErrorContains(t, err, "invalid app id")
+	assert.ErrorContains(t, err, authBusiness.ErrInvalidAppId.Error())
 
 	// создаем приложение, аутентифицируемся и удаляем пользователя для
 	// проверки ошибки несуществующего пользователя
@@ -161,7 +162,7 @@ func TestRegisterLogin_Errors(t *testing.T) {
 	require.Error(t, err)
 	assert.Empty(t, respRefresh.GetAccessToken())
 	assert.Empty(t, respRefresh.GetRefreshToken())
-	assert.ErrorContains(t, err, "invalid credentials")
+	assert.ErrorContains(t, err, authBusiness.ErrInvalidCredentials.Error())
 
 	username = randomUsername()
 	pass = randomFakePassword()
@@ -194,7 +195,7 @@ func TestRegisterLogin_Errors(t *testing.T) {
 		RefreshToken: respLogin.GetRefreshToken(),
 	})
 	require.Error(t, err)
-	assert.ErrorContains(t, err, "token revoked")
+	assert.ErrorContains(t, err, authBusiness.ErrTokenRevoked.Error())
 	assert.Empty(t, respRefresh.GetAccessToken())
 	assert.Empty(t, respRefresh.GetRefreshToken())
 }

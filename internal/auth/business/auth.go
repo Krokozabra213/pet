@@ -13,7 +13,8 @@ import (
 	authgrpc "github.com/Krokozabra213/sso/internal/auth/grpc"
 	"github.com/Krokozabra213/sso/internal/auth/lib/hmac"
 	"github.com/Krokozabra213/sso/internal/auth/lib/jwt"
-	"github.com/Krokozabra213/sso/internal/auth/repository/storage"
+	"github.com/Krokozabra213/sso/internal/auth/repository/storage/postgres"
+	"github.com/Krokozabra213/sso/internal/auth/repository/storage/redis"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -82,7 +83,7 @@ func (a *Auth) RegisterNewUser(
 
 	id, err := a.userProvider.SaveUser(ctx, username, string(passHash))
 	if err != nil {
-		if errors.Is(err, storage.ErrUserExist) {
+		if errors.Is(err, postgres.ErrPGDuplicate) {
 			return 0, fmt.Errorf("%s: %w", op, ErrUserExist)
 		}
 
@@ -108,7 +109,7 @@ func (a *Auth) Login(
 
 	app, err := a.appProvider.AppByID(ctx, appID)
 	if err != nil {
-		if errors.Is(err, storage.ErrAppNotFound) {
+		if errors.Is(err, postgres.ErrPGNotFound) {
 			return "", "", fmt.Errorf("%s: %w", op, ErrInvalidAppId)
 		}
 
@@ -119,7 +120,7 @@ func (a *Auth) Login(
 	user, err := a.userProvider.User(ctx, username)
 
 	if err != nil {
-		if errors.Is(err, storage.ErrUserNotFound) {
+		if errors.Is(err, postgres.ErrPGNotFound) {
 			return "", "", fmt.Errorf("%s: %w", op, ErrInvalidCredentials)
 		}
 
@@ -170,7 +171,7 @@ func (a *Auth) Logout(
 
 	err = a.tokenRepo.SaveToken(ctx, hashToken, claims.Exp)
 	if err != nil {
-		if errors.Is(err, storage.ErrTokenExpired) {
+		if errors.Is(err, redis.ErrTokenExpired) {
 			return false, fmt.Errorf("%s: %w", op, ErrTokenExpired)
 		}
 
@@ -215,7 +216,7 @@ func (a *Auth) PublicKey(ctx context.Context, appID int) (string, error) {
 
 	_, err := a.appProvider.AppByID(ctx, appID)
 	if err != nil {
-		if errors.Is(err, storage.ErrAppNotFound) {
+		if errors.Is(err, postgres.ErrPGNotFound) {
 			return "", fmt.Errorf("%s: %w", op, ErrInvalidAppId)
 		}
 
@@ -259,7 +260,7 @@ func (a *Auth) Refresh(ctx context.Context, refreshToken string) (string, string
 	// проверяем наличие пользователя с таким id
 	user, err := a.userProvider.UserByID(ctx, claims.UserID)
 	if err != nil {
-		if errors.Is(err, storage.ErrUserNotFound) {
+		if errors.Is(err, postgres.ErrPGNotFound) {
 			return "", "", fmt.Errorf("%s: %w", op, ErrInvalidCredentials)
 		}
 
@@ -270,7 +271,7 @@ func (a *Auth) Refresh(ctx context.Context, refreshToken string) (string, string
 	// проверяем наличие приложения с таким id
 	app, err := a.appProvider.AppByID(ctx, claims.AppID)
 	if err != nil {
-		if errors.Is(err, storage.ErrAppNotFound) {
+		if errors.Is(err, postgres.ErrPGNotFound) {
 			return "", "", fmt.Errorf("%s: %w", op, ErrInvalidAppId)
 		}
 
@@ -292,7 +293,7 @@ func (a *Auth) Refresh(ctx context.Context, refreshToken string) (string, string
 
 	err = a.tokenRepo.SaveToken(ctx, hashToken, claims.Exp)
 	if err != nil {
-		if errors.Is(err, storage.ErrTokenExpired) {
+		if errors.Is(err, redis.ErrTokenExpired) {
 			return "", "", fmt.Errorf("%s: %w", op, ErrTokenExpired)
 		}
 
