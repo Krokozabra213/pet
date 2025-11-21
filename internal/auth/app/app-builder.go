@@ -40,15 +40,15 @@ func (builder *AuthAppBuilder) NoSQLDBConn() *redispet.RDB {
 
 // repositories
 func (builder *AuthAppBuilder) UserProvider(connect *postgrespet.PGDB) authBusiness.IUserProvider {
-	return postgres.New(connect, builder.log)
+	return postgres.New(connect)
 }
 
 func (builder *AuthAppBuilder) AppProvider(connect *postgrespet.PGDB) authBusiness.IAppProvider {
-	return postgres.New(connect, builder.log)
+	return postgres.New(connect)
 }
 
 func (builder *AuthAppBuilder) TokenProvider(connect *redispet.RDB) authBusiness.ITokenProvider {
-	return redis.New(connect, builder.log)
+	return redis.New(connect)
 }
 
 // libraries

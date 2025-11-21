@@ -1,36 +1,32 @@
 package redis
 
 import (
-	"context"
 	"errors"
 
+	"github.com/Krokozabra213/sso/internal/auth/repository/storage"
 	redispet "github.com/Krokozabra213/sso/pkg/db/redis-pet"
 )
 
-func ErrorFactory(err error) error {
+func ErrorFactory(entity string, err error) error {
 
-	switch {
-	case errors.Is(err, context.DeadlineExceeded) ||
-		errors.Is(err, context.Canceled):
-		return ErrContext
-	}
-
-	// ошибки redispet
+	// ошибки redis-pet
 	var customErr *redispet.CustomError
 	if errors.As(err, &customErr) {
 		switch {
 		case errors.Is(customErr, redispet.ErrAuth):
-			return ErrRedisAuth
-		case errors.Is(customErr, redispet.ErrContext):
-			return ErrRedisCtx
+			return storage.ErrAuth
+		case errors.Is(customErr, redispet.ErrCtxCancelled):
+			return storage.ErrCtxCancelled
+		case errors.Is(customErr, redispet.ErrCtxDeadline):
+			return storage.ErrCtxDeadline
 		case errors.Is(customErr, redispet.ErrConnection):
-			return ErrRedisConnection
+			return storage.ErrConnection
 		case errors.Is(customErr, redispet.ErrOOM):
-			return ErrRedisOOM
+			return storage.ErrOOM
 		case errors.Is(customErr, redispet.ErrInternal):
-			return ErrRedisInternal
+			return storage.ErrInternal
 		}
 	}
 
-	return ErrUnknown
+	return storage.ErrUnknown
 }

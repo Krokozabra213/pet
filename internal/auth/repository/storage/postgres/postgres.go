@@ -2,10 +2,10 @@ package postgres
 
 import (
 	"context"
-	"log/slog"
 	"time"
 
 	"github.com/Krokozabra213/sso/internal/auth/domain"
+	"github.com/Krokozabra213/sso/internal/auth/repository/storage"
 	postgrespet "github.com/Krokozabra213/sso/pkg/db/postgres-pet"
 )
 
@@ -14,73 +14,46 @@ const (
 )
 
 type Postgres struct {
-	DB  *postgrespet.PGDB
-	log *slog.Logger
+	DB *postgrespet.PGDB
 }
 
-func New(db *postgrespet.PGDB, log *slog.Logger) *Postgres {
+func New(db *postgrespet.PGDB) *Postgres {
 	return &Postgres{
-		DB:  db,
-		log: log,
+		DB: db,
 	}
 }
 
 func (p *Postgres) SaveUser(
-	ctx context.Context, username string, pass string,
+	parentCtx context.Context, user *domain.User,
 ) (uid uint, err error) {
 
-	const op = "postgres.SaveUser"
-	log := p.log.With(
-		slog.String("op", op),
-		slog.String("username", username),
-	)
-
-	if _, hasDeadline := ctx.Deadline(); !hasDeadline {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, ctxTimeout)
-		defer cancel()
-	}
+	ctx, cancel := storage.EnsureCtxTimeout(parentCtx, ctxTimeout)
+	defer cancel()
 
 	if ctx.Err() != nil {
-		log.Error("context error", "err", ctx.Err())
-		return 0, ErrContext
+		return 0, storage.CtxError(ctx.Err())
 	}
 
-	user := &domain.User{
-		Username: username,
-		Password: pass,
-	}
 	result := p.DB.Client.WithContext(ctx).Create(user)
 
 	customErr := postgrespet.ErrorWrapper(result.Error)
 	if customErr != nil {
-		log.Error("postgres error", "err", customErr.Error())
-		err := ErrorFactory(customErr)
+		err := ErrorFactory(domain.UserEntity, customErr)
 		return 0, err
 	}
 
-	log.Info("user saved successfully", "user_id", user.ID)
 	return user.ID, nil
 }
 
 func (p *Postgres) User(
-	ctx context.Context, username string,
+	parentCtx context.Context, username string,
 ) (*domain.User, error) {
 
-	const op = "postgres.User"
-	log := p.log.With(
-		slog.String("op", op),
-	)
-
-	if _, hasDeadline := ctx.Deadline(); !hasDeadline {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, ctxTimeout)
-		defer cancel()
-	}
+	ctx, cancel := storage.EnsureCtxTimeout(parentCtx, ctxTimeout)
+	defer cancel()
 
 	if ctx.Err() != nil {
-		log.Error("context error", "err", ctx.Err())
-		return nil, ErrContext
+		return nil, storage.CtxError(ctx.Err())
 	}
 
 	var user domain.User
@@ -88,31 +61,21 @@ func (p *Postgres) User(
 
 	customErr := postgrespet.ErrorWrapper(result.Error)
 	if customErr != nil {
-		log.Error("postgres error", "err", customErr.Error())
-		err := ErrorFactory(customErr)
+		err := ErrorFactory(domain.UserEntity, customErr)
 		return nil, err
 	}
 	return &user, nil
 }
 
 func (p *Postgres) UserByID(
-	ctx context.Context, id int,
+	parentCtx context.Context, id int64,
 ) (*domain.User, error) {
 
-	const op = "postgres.UserByID"
-	log := p.log.With(
-		slog.String("op", op),
-	)
-
-	if _, hasDeadline := ctx.Deadline(); !hasDeadline {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, ctxTimeout)
-		defer cancel()
-	}
+	ctx, cancel := storage.EnsureCtxTimeout(parentCtx, ctxTimeout)
+	defer cancel()
 
 	if ctx.Err() != nil {
-		log.Error("context error", "err", ctx.Err())
-		return nil, ErrContext
+		return nil, storage.CtxError(ctx.Err())
 	}
 
 	var user domain.User
@@ -120,31 +83,21 @@ func (p *Postgres) UserByID(
 
 	customErr := postgrespet.ErrorWrapper(result.Error)
 	if customErr != nil {
-		log.Error("postgres error", "err", customErr.Error())
-		err := ErrorFactory(customErr)
+		err := ErrorFactory(domain.UserEntity, customErr)
 		return nil, err
 	}
 	return &user, nil
 }
 
 func (p *Postgres) IsAdmin(
-	ctx context.Context, userID int64,
+	parentCtx context.Context, userID int64,
 ) (bool, error) {
 
-	const op = "postgres.IsAdmin"
-	log := p.log.With(
-		slog.String("op", op),
-	)
-
-	if _, hasDeadline := ctx.Deadline(); !hasDeadline {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, ctxTimeout)
-		defer cancel()
-	}
+	ctx, cancel := storage.EnsureCtxTimeout(parentCtx, ctxTimeout)
+	defer cancel()
 
 	if ctx.Err() != nil {
-		log.Error("context error", "err", ctx.Err())
-		return false, ErrContext
+		return false, storage.CtxError(ctx.Err())
 	}
 
 	var exists bool
@@ -155,31 +108,21 @@ func (p *Postgres) IsAdmin(
 
 	customErr := postgrespet.ErrorWrapper(result.Error)
 	if customErr != nil {
-		log.Error("postgres error", "err", customErr.Error())
-		err := ErrorFactory(customErr)
+		err := ErrorFactory(domain.AdminEntity, customErr)
 		return false, err
 	}
 	return exists, nil
 }
 
 func (p *Postgres) AppByID(
-	ctx context.Context, appID int,
+	parentCtx context.Context, appID int,
 ) (*domain.App, error) {
 
-	const op = "postgres.AppByID"
-	log := p.log.With(
-		slog.String("op", op),
-	)
-
-	if _, hasDeadline := ctx.Deadline(); !hasDeadline {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, ctxTimeout)
-		defer cancel()
-	}
+	ctx, cancel := storage.EnsureCtxTimeout(parentCtx, ctxTimeout)
+	defer cancel()
 
 	if ctx.Err() != nil {
-		log.Error("context error", "err", ctx.Err())
-		return nil, ErrContext
+		return nil, storage.CtxError(ctx.Err())
 	}
 
 	var app domain.App
@@ -187,39 +130,28 @@ func (p *Postgres) AppByID(
 
 	customErr := postgrespet.ErrorWrapper(result.Error)
 	if customErr != nil {
-		log.Error("postgres error", "err", customErr.Error())
-		err := ErrorFactory(customErr)
+		err := ErrorFactory(domain.AppEntity, customErr)
 		return nil, err
 	}
 	return &app, nil
 }
 
 func (p *Postgres) SaveToken(
-	ctx context.Context, token *domain.BlackToken,
+	parentCtx context.Context, token *domain.BlackToken,
 ) (err error) {
 
-	const op = "postgres.SaveToken"
-	log := p.log.With(
-		slog.String("op", op),
-	)
-
-	if _, hasDeadline := ctx.Deadline(); !hasDeadline {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, ctxTimeout)
-		defer cancel()
-	}
+	ctx, cancel := storage.EnsureCtxTimeout(parentCtx, ctxTimeout)
+	defer cancel()
 
 	if ctx.Err() != nil {
-		log.Error("context error", "err", ctx.Err())
-		return ErrContext
+		return storage.CtxError(ctx.Err())
 	}
 
 	result := p.DB.Client.WithContext(ctx).Create(token)
 
 	customErr := postgrespet.ErrorWrapper(result.Error)
 	if customErr != nil {
-		log.Error("postgres error", "err", customErr.Error())
-		err := ErrorFactory(customErr)
+		err := ErrorFactory(domain.TokenEntity, customErr)
 		return err
 	}
 	return nil

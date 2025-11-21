@@ -3,19 +3,15 @@ package authBusiness
 import "errors"
 
 var (
-	ErrInvalidCredentials = errors.New("invalid credentials")
-	ErrInvalidAppId       = errors.New("invalid app id")
-	ErrUserExist          = errors.New("user already exists")
-	ErrPermission         = errors.New("permission error")
-	ErrTokenRevoked       = errors.New("token revoked")
-	ErrHashPassword       = errors.New("hash password error")
-	ErrTokenExpired       = errors.New("token expired")
 	ErrTimeout            = errors.New("timeout request")
-)
-
-//domain errors
-var (
-	ErrAppUnknown   = errors.New("unknown app error")
-	ErrUserUnknown  = errors.New("unknown user error")
-	ErrTokenUnknown = errors.New("unknown token error")
+	ErrExists             = errors.New("exists error")
+	ErrNotFound           = errors.New("not found error")
+	ErrInternal           = errors.New("internal service error")
+	ErrHashPassword       = errors.New("password hashing error")
+	ErrInvalidCredentials = errors.New("invalid credentials")
+	ErrTokenGenerate      = errors.New("generation access and refresh token error")
+	ErrParse              = errors.New("parsing error")
+	ErrPermission         = errors.New("not enough permissions")
+	ErrTokenExpired       = errors.New("the token has expired")
+	ErrTokenRevoked       = errors.New("token revoked")
 )

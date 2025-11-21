@@ -9,11 +9,12 @@ import (
 )
 
 var (
-	ErrAuth       = errors.New("REDIS_AUTH_ERROR")
-	ErrOOM        = errors.New("REDIS_OUT_OF_MEMORY")
-	ErrContext    = errors.New("CONTEXT_TIME_EXCEEDED_OR_CANCELLED")
-	ErrConnection = errors.New("REDIS_CONNECT_ERROR")
-	ErrInternal   = errors.New("INTERNAL_ERROR")
+	ErrAuth         = errors.New("REDIS_AUTH_ERROR")
+	ErrOOM          = errors.New("REDIS_OUT_OF_MEMORY")
+	ErrConnection   = errors.New("REDIS_CONNECT_ERROR")
+	ErrCtxCancelled = errors.New("CTX_CANCELLED_ERROR")
+	ErrCtxDeadline  = errors.New("CTX_DEADLINE_ERROR")
+	ErrInternal     = errors.New("INTERNAL_ERROR")
 )
 
 func ErrorWrapper(err error) *CustomError {
@@ -21,17 +22,20 @@ func ErrorWrapper(err error) *CustomError {
 		return nil
 	}
 
-	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
-		return &CustomError{
-			Message: ErrContext.Error(),
-			Err:     err,
-		}
-	}
-
 	var redisErr *redis.Error
 	if errors.As(err, redisErr) {
 
 		switch {
+		case ctxCancelled(err):
+			return &CustomError{
+				Message: ErrCtxCancelled.Error(),
+				Err:     err,
+			}
+		case ctxDeadline(err):
+			return &CustomError{
+				Message: ErrCtxDeadline.Error(),
+				Err:     err,
+			}
 		case isAuth(err):
 			return &CustomError{
 				Message: ErrAuth.Error(),
@@ -155,4 +159,12 @@ func isConnect(err error) bool {
 	}
 
 	return false
+}
+
+func ctxCancelled(err error) bool {
+	return errors.Is(err, context.Canceled)
+}
+
+func ctxDeadline(err error) bool {
+	return errors.Is(err, context.DeadlineExceeded)
 }

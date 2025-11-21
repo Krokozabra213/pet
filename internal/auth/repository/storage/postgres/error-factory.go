@@ -1,34 +1,32 @@
 package postgres
 
 import (
-	"context"
 	"errors"
 
+	"github.com/Krokozabra213/sso/internal/auth/repository/storage"
 	postgrespet "github.com/Krokozabra213/sso/pkg/db/postgres-pet"
 )
 
-func ErrorFactory(err error) error {
-
-	switch {
-	case errors.Is(err, context.DeadlineExceeded) ||
-		errors.Is(err, context.Canceled):
-		return ErrContext
-	}
+func ErrorFactory(entity string, err error) error {
 
 	//ошибки postgres-pet
 	var customErr *postgrespet.CustomError
 	if errors.As(err, &customErr) {
 		switch {
+		case errors.Is(err, postgrespet.ErrCtxCancelled):
+			return storage.ErrCtxCancelled
+		case errors.Is(err, postgrespet.ErrCtxDeadline):
+			return storage.ErrCtxDeadline
 		case errors.Is(err, postgrespet.ErrValidation):
-			return ErrPGValidation
+			return storage.ErrValidation
 		case errors.Is(err, postgrespet.ErrDuplicateKey):
-			return ErrPGDuplicate
+			return storage.ErrDuplicate
 		case errors.Is(err, postgrespet.ErrNotFound):
-			return ErrPGNotFound
+			return storage.ErrNotFound
 		case errors.Is(err, postgrespet.ErrInternal):
-			return ErrPGInternal
+			return storage.ErrInternal
 		}
 	}
 
-	return ErrUnknown
+	return storage.ErrUnknown
 }
