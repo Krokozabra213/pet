@@ -2,150 +2,156 @@ package postgres
 
 import (
 	"context"
-	"log/slog"
+	"time"
 
 	"github.com/Krokozabra213/sso/internal/auth/domain"
+	"github.com/Krokozabra213/sso/internal/auth/repository/storage"
 	postgrespet "github.com/Krokozabra213/sso/pkg/db/postgres-pet"
 )
 
+const (
+	ctxTimeout = 5 * time.Second
+)
+
 type Postgres struct {
-	DB  *postgrespet.PGDB
-	log *slog.Logger
+	DB *postgrespet.PGDB
 }
 
-func New(db *postgrespet.PGDB, log *slog.Logger) *Postgres {
+func New(db *postgrespet.PGDB) *Postgres {
 	return &Postgres{
-		DB:  db,
-		log: log,
+		DB: db,
 	}
 }
 
 func (p *Postgres) SaveUser(
-	ctx context.Context, username string, pass string,
+	parentCtx context.Context, user *domain.User,
 ) (uid uint, err error) {
 
-	const op = "postgres.SaveUser"
-	log := p.log.With(
-		slog.String("op", op),
-	)
+	ctx, cancel := storage.EnsureCtxTimeout(parentCtx, ctxTimeout)
+	defer cancel()
 
-	user := &domain.User{
-		Username: username,
-		Password: pass,
+	if ctx.Err() != nil {
+		return 0, storage.CtxError(ctx.Err())
 	}
-	result := p.DB.Client.Create(user)
+
+	result := p.DB.Client.WithContext(ctx).Create(user)
 
 	customErr := postgrespet.ErrorWrapper(result.Error)
 	if customErr != nil {
-		log.Error("postgres error", "err", customErr.Error())
-		err := ErrorFactory(customErr)
+		err := ErrorFactory(domain.UserEntity, customErr)
 		return 0, err
 	}
+
 	return user.ID, nil
 }
 
 func (p *Postgres) User(
-	ctx context.Context, username string,
+	parentCtx context.Context, username string,
 ) (*domain.User, error) {
 
-	const op = "postgres.User"
-	log := p.log.With(
-		slog.String("op", op),
-	)
+	ctx, cancel := storage.EnsureCtxTimeout(parentCtx, ctxTimeout)
+	defer cancel()
+
+	if ctx.Err() != nil {
+		return nil, storage.CtxError(ctx.Err())
+	}
 
 	var user domain.User
-	result := p.DB.Client.First(&user, "username = ?", username)
+	result := p.DB.Client.WithContext(ctx).First(&user, "username = ?", username)
 
 	customErr := postgrespet.ErrorWrapper(result.Error)
 	if customErr != nil {
-		log.Error("postgres error", "err", customErr.Error())
-		err := ErrorFactory(customErr)
+		err := ErrorFactory(domain.UserEntity, customErr)
 		return nil, err
 	}
 	return &user, nil
 }
 
 func (p *Postgres) UserByID(
-	ctx context.Context, id int,
+	parentCtx context.Context, id int64,
 ) (*domain.User, error) {
 
-	const op = "postgres.UserByID"
-	log := p.log.With(
-		slog.String("op", op),
-	)
+	ctx, cancel := storage.EnsureCtxTimeout(parentCtx, ctxTimeout)
+	defer cancel()
+
+	if ctx.Err() != nil {
+		return nil, storage.CtxError(ctx.Err())
+	}
 
 	var user domain.User
-	result := p.DB.Client.First(&user, "id = ?", id)
+	result := p.DB.Client.WithContext(ctx).First(&user, "id = ?", id)
 
 	customErr := postgrespet.ErrorWrapper(result.Error)
 	if customErr != nil {
-		log.Error("postgres error", "err", customErr.Error())
-		err := ErrorFactory(customErr)
+		err := ErrorFactory(domain.UserEntity, customErr)
 		return nil, err
 	}
 	return &user, nil
 }
 
 func (p *Postgres) IsAdmin(
-	ctx context.Context, userID int64,
+	parentCtx context.Context, userID int64,
 ) (bool, error) {
 
-	const op = "postgres.IsAdmin"
-	log := p.log.With(
-		slog.String("op", op),
-	)
+	ctx, cancel := storage.EnsureCtxTimeout(parentCtx, ctxTimeout)
+	defer cancel()
+
+	if ctx.Err() != nil {
+		return false, storage.CtxError(ctx.Err())
+	}
 
 	var exists bool
-	result := p.DB.Client.Raw(
+	result := p.DB.Client.WithContext(ctx).Raw(
 		"SELECT EXISTS(SELECT 1 FROM admins WHERE user_id = ?)",
 		userID,
 	).Scan(&exists)
 
 	customErr := postgrespet.ErrorWrapper(result.Error)
 	if customErr != nil {
-		log.Error("postgres error", "err", customErr.Error())
-		err := ErrorFactory(customErr)
+		err := ErrorFactory(domain.AdminEntity, customErr)
 		return false, err
 	}
 	return exists, nil
 }
 
 func (p *Postgres) AppByID(
-	ctx context.Context, appID int,
+	parentCtx context.Context, appID int,
 ) (*domain.App, error) {
 
-	const op = "postgres.AppByID"
-	log := p.log.With(
-		slog.String("op", op),
-	)
+	ctx, cancel := storage.EnsureCtxTimeout(parentCtx, ctxTimeout)
+	defer cancel()
+
+	if ctx.Err() != nil {
+		return nil, storage.CtxError(ctx.Err())
+	}
 
 	var app domain.App
-	result := p.DB.Client.First(&app, "id = ?", appID)
+	result := p.DB.Client.WithContext(ctx).First(&app, "id = ?", appID)
 
 	customErr := postgrespet.ErrorWrapper(result.Error)
 	if customErr != nil {
-		log.Error("postgres error", "err", customErr.Error())
-		err := ErrorFactory(customErr)
+		err := ErrorFactory(domain.AppEntity, customErr)
 		return nil, err
 	}
 	return &app, nil
 }
 
 func (p *Postgres) SaveToken(
-	ctx context.Context, token *domain.BlackToken,
+	parentCtx context.Context, token *domain.BlackToken,
 ) (err error) {
 
-	const op = "postgres.SaveToken"
-	log := p.log.With(
-		slog.String("op", op),
-	)
+	ctx, cancel := storage.EnsureCtxTimeout(parentCtx, ctxTimeout)
+	defer cancel()
 
-	result := p.DB.Client.Create(token)
+	if ctx.Err() != nil {
+		return storage.CtxError(ctx.Err())
+	}
+
+	result := p.DB.Client.WithContext(ctx).Create(token)
 
 	customErr := postgrespet.ErrorWrapper(result.Error)
 	if customErr != nil {
-		log.Error("postgres error", "err", customErr.Error())
-		err := ErrorFactory(customErr)
+		err := ErrorFactory(domain.TokenEntity, customErr)
 		return err
 	}
 	return nil

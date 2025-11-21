@@ -1,6 +1,7 @@
 package postgrespet
 
 import (
+	"context"
 	"errors"
 
 	"github.com/jackc/pgx/v5/pgconn"
@@ -26,6 +27,8 @@ var (
 	ErrDuplicateKey = errors.New("DUPLICATE_KEY_ERROR")
 	ErrNotFound     = errors.New("NOT_FOUND_ERROR")
 	ErrValidation   = errors.New("VALIDATION_ERROR")
+	ErrCtxCancelled = errors.New("CTX_CANCELLED_ERROR")
+	ErrCtxDeadline  = errors.New("CTX_DEADLINE_ERROR")
 	ErrInternal     = errors.New("INTERNAL_ERROR")
 )
 
@@ -56,11 +59,20 @@ func ErrorWrapper(err error) *CustomError {
 		}
 	}
 
-	// gorm errors
 	switch {
 	case isNotFound(err):
 		return &CustomError{
 			Message: ErrNotFound.Error(),
+			Err:     err,
+		}
+	case ctxCancelled(err):
+		return &CustomError{
+			Message: ErrCtxCancelled.Error(),
+			Err:     err,
+		}
+	case ctxDeadline(err):
+		return &CustomError{
+			Message: ErrCtxDeadline.Error(),
 			Err:     err,
 		}
 	default:
@@ -69,6 +81,14 @@ func ErrorWrapper(err error) *CustomError {
 			Err:     err,
 		}
 	}
+}
+
+func ctxCancelled(err error) bool {
+	return errors.Is(err, context.Canceled)
+}
+
+func ctxDeadline(err error) bool {
+	return errors.Is(err, context.DeadlineExceeded)
 }
 
 // Вспомогательные функции

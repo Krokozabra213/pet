@@ -24,7 +24,7 @@ func TestRegisterLogin_Errors(t *testing.T) {
 	})
 
 	require.Error(t, err)
-	assert.ErrorContains(t, err, authBusiness.ErrInvalidAppId.Error())
+	assert.ErrorContains(t, err, authBusiness.ErrNotFound.Error())
 	assert.Empty(t, respPublicKey.GetPublicKey())
 
 	username := randomUsername()
@@ -40,6 +40,7 @@ func TestRegisterLogin_Errors(t *testing.T) {
 
 	realUsername := username
 	realPass := pass
+	realUserID := respReg.GetUserId()
 
 	// повторная регистрация с тем же username
 	respReg, err = st.AuthClient.Register(ctx, &sso.RegisterRequest{
@@ -48,7 +49,7 @@ func TestRegisterLogin_Errors(t *testing.T) {
 	})
 	require.Error(t, err)
 	assert.Empty(t, respReg.GetUserId())
-	assert.ErrorContains(t, err, authBusiness.ErrUserExist.Error())
+	assert.ErrorContains(t, err, authBusiness.ErrExists.Error())
 
 	// проверка аутентификации на ошибки
 	// проверка на неправильный appID
@@ -60,7 +61,7 @@ func TestRegisterLogin_Errors(t *testing.T) {
 	require.Error(t, err)
 	assert.Empty(t, respLogin.GetAccessToken())
 	assert.Empty(t, respLogin.GetRefreshToken())
-	assert.ErrorContains(t, err, authBusiness.ErrInvalidAppId.Error())
+	assert.ErrorContains(t, err, authBusiness.ErrNotFound.Error())
 
 	// создаем приложение и производим аутентификацию
 	appID, err = st.CreateApp("test")
@@ -76,7 +77,7 @@ func TestRegisterLogin_Errors(t *testing.T) {
 	require.Error(t, err)
 	assert.Empty(t, respLogin.GetAccessToken())
 	assert.Empty(t, respLogin.GetRefreshToken())
-	assert.ErrorContains(t, err, authBusiness.ErrInvalidCredentials.Error())
+	assert.ErrorContains(t, err, authBusiness.ErrNotFound.Error())
 
 	// аутентификация с неправильным password
 	respLogin, err = st.AuthClient.Login(ctx, &sso.LoginRequest{
@@ -106,6 +107,14 @@ func TestRegisterLogin_Errors(t *testing.T) {
 	})
 	require.Error(t, err)
 	assert.Equal(t, respIsAdmin.GetIsAdmin(), false)
+	assert.ErrorContains(t, err, authBusiness.ErrNotFound.Error())
+
+	// проверяем на реального пользователя но без прав администратора
+	respIsAdmin, err = st.AuthClient.IsAdmin(ctx, &sso.IsAdminRequest{
+		UserId: realUserID,
+	})
+	require.Error(t, err)
+	assert.Equal(t, respIsAdmin.GetIsAdmin(), false)
 	assert.ErrorContains(t, err, authBusiness.ErrPermission.Error())
 
 	// создаем рандомный appID для проверки getPublicKey
@@ -115,7 +124,7 @@ func TestRegisterLogin_Errors(t *testing.T) {
 	})
 	require.Error(t, err)
 	assert.Empty(t, respPublicKey.GetPublicKey())
-	assert.ErrorContains(t, err, authBusiness.ErrInvalidAppId.Error())
+	assert.ErrorContains(t, err, authBusiness.ErrNotFound.Error())
 
 	// совершаем аутентификацию для проверки Refresh
 	respLogin, err = st.AuthClient.Login(ctx, &sso.LoginRequest{
@@ -137,7 +146,7 @@ func TestRegisterLogin_Errors(t *testing.T) {
 	require.Error(t, err)
 	assert.Empty(t, respRefresh.GetAccessToken())
 	assert.Empty(t, respRefresh.GetRefreshToken())
-	assert.ErrorContains(t, err, authBusiness.ErrInvalidAppId.Error())
+	assert.ErrorContains(t, err, authBusiness.ErrNotFound.Error())
 
 	// создаем приложение, аутентифицируемся и удаляем пользователя для
 	// проверки ошибки несуществующего пользователя
@@ -162,7 +171,7 @@ func TestRegisterLogin_Errors(t *testing.T) {
 	require.Error(t, err)
 	assert.Empty(t, respRefresh.GetAccessToken())
 	assert.Empty(t, respRefresh.GetRefreshToken())
-	assert.ErrorContains(t, err, authBusiness.ErrInvalidCredentials.Error())
+	assert.ErrorContains(t, err, authBusiness.ErrNotFound.Error())
 
 	username = randomUsername()
 	pass = randomFakePassword()
