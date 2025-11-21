@@ -5,7 +5,7 @@ import (
 
 	"github.com/Krokozabra213/protos/gen/go/proto/sso"
 	authBusiness "github.com/Krokozabra213/sso/internal/auth/business"
-	"github.com/Krokozabra213/sso/tests/suite"
+	"github.com/Krokozabra213/sso/tests/auth/suite"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
