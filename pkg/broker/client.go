@@ -1,55 +1,60 @@
 package broker
 
+import "github.com/Krokozabra213/sso/pkg/broker/utils"
+
 type Client struct {
-	ID   uint64
-	Name string
-	Buf  chan interface{}
-	Done chan struct{}
+	uuid uint64
+	name string
+	buf  chan interface{}
+	done chan struct{}
 }
 
-func NewClient(id uint64, name string, bufferSize int) Client {
-	return Client{
-		ID:   id,
-		Name: name,
-		Buf:  make(chan interface{}, bufferSize),
-		Done: make(chan struct{}),
+func NewClient(id uint64, name string, bufferSize int) *Client {
+	return &Client{
+		uuid: utils.GenerateRandomUint64(),
+		name: name,
+		buf:  make(chan interface{}, bufferSize),
+		done: make(chan struct{}),
 	}
 }
 
-func (cli *Client) GetID() uint64 {
-	return cli.ID
+func (cli *Client) GetUUID() uint64 {
+	return cli.uuid
 }
 
 func (cli *Client) GetName() string {
-	return cli.Name
+	return cli.name
 }
 
-func (cli *Client) GetBuffer() chan interface{} {
-	return cli.Buf
-}
+// func (cli *Client) GetBuffer() chan interface{} {
+// 	return cli.buf
+// }
 
-func (cli *Client) GetDone() chan struct{} {
-	return cli.Done
-}
+// func (cli *Client) GetDone() chan struct{} {
+// 	return cli.done
+// }
 
 func (cli *Client) Close() {
-	close(cli.Done)
-	close(cli.Buf)
+	close(cli.done)
+	close(cli.buf)
 }
 
-func (cli *Client) Send(message interface{}) {
+func (cli *Client) send(message interface{}) {
+	if cli == nil {
+		return
+	}
 	select {
-	case <-cli.Done:
+	case <-cli.done:
 	default:
-		cli.Buf <- message
+		cli.buf <- message
 	}
 }
 
 type IClient interface {
-	GetID() int64
+	GetUUID() uint64
 	GetName() string
-	GetBuffer() chan interface{}
-	GetDone() chan struct{}
+	// GetBuffer() chan interface{}
+	// GetDone() chan struct{}
 	Close()
-	Send(message interface{})
+	send(message interface{})
 }

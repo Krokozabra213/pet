@@ -1,40 +1,36 @@
 package broker
 
 import (
-	"fmt"
+	"context"
+	"sync"
 	"time"
 
 	"github.com/Krokozabra213/sso/pkg/broker/utils"
 )
 
-// maxSpectators - количество горутин, принимающих запросы от пользователей
-// maxShards - количество шардированных кешей
-// sizeBuffer - размер буфера shard при инициализации
-// const (
-// maxSpectators = 4
-// maxShards     = 5
-// )
+const (
+	CtxSendTimeout = 3 * time.Second
+)
 
 // BucketsLog - степень двойки количества корзин
-func NewCBroker(BucketsLog uint8, msgBufSize, allocationCache, shardSpectatorsCount int) (*CBroker, error) {
-	if BucketsLog == 0 {
-		return nil, fmt.Errorf("some error")
+func NewCBroker(bucketsLog, maxClientCount int) (*CBroker, error) {
+	if bucketsLog == 0 || bucketsLog > 16 {
+		return nil, ErrBucketsCount
 	}
 
-	// var b uint8
-	// if utils.IsPowerOfTwo(countShards) {
-	// 	b = countShards
-	// } else {
-	// 	b = utils.LogarithmFloor(countShards)
-	// }
+	numBuckets := 1 << bucketsLog // 2^BucketsLog
+	maskBuckets := uint64(numBuckets - 1)
 
 	broker := &CBroker{
-		buckets: make([]*Bucket, utils.PowInt(2, BucketsLog)),
+		buckets: make([]*Bucket, numBuckets),
 		seed:    uint64(time.Now().UnixNano()),
-		B:       BucketsLog,
+		mask:    maskBuckets,
 	}
-	for i := range len(broker.buckets) {
-		broker.buckets[i] = NewBucket(msgBufSize, allocationCache, shardSpectatorsCount)
+
+	if numBuckets >= 8 {
+		broker.parallelInitBuckets(maxClientCount)
+	} else {
+		broker.initBuckets(maxClientCount)
 	}
 
 	return broker, nil
@@ -43,39 +39,88 @@ func NewCBroker(BucketsLog uint8, msgBufSize, allocationCache, shardSpectatorsCo
 type CBroker struct {
 	buckets []*Bucket
 	seed    uint64
-	B       uint8
+	mask    uint64
 }
 
-func (CB *CBroker) Subscribe(cli IClient) error {
-	hash := utils.SimpleUint64Hash(uint64(cli.GetID()), CB.seed)
-	numBuckets := uint64(1) << CB.B
-	bucketMask := numBuckets - 1
-	bucketIndex := (hash >> (64 - CB.B)) & bucketMask
-	err := CB.buckets[bucketIndex].Register(cli)
-	// indShard := utils.Hash(cli.GetName(), len(CB.shards))
-	// err := CB.shards[indShard].register(cli)
-	return err
-	// return nil
+func (CB *CBroker) parallelInitBuckets(maxClientCount int) {
+	var wg sync.WaitGroup
+	for i := 0; i < len(CB.buckets); i++ {
+		wg.Add(1)
+		go func(idx int) {
+			defer wg.Done()
+			CB.buckets[idx] = NewBucket(maxClientCount)
+		}(i)
+	}
+	wg.Wait()
 }
 
-func (CB *CBroker) Send(message interface{}) {
-	for _, s := range CB.buckets {
-		s.Send(message)
+func (CB *CBroker) initBuckets(maxClientCount int) {
+	for i := 0; i < len(CB.buckets); i++ {
+		CB.buckets[i] = NewBucket(maxClientCount)
 	}
 }
 
-func (CB *CBroker) Unsubscribe(cli IClient) {
-	// indShard := utils.Hash(cli.GetName(), len(CB.buckets))
-	// CB.buckets[indShard].delete(cli)
-	hash := utils.SimpleUint64Hash(uint64(cli.GetID()), CB.seed)
-	numBuckets := uint64(1) << CB.B
-	bucketMask := numBuckets - 1
-	bucketIndex := (hash >> (64 - CB.B)) & bucketMask
-	CB.buckets[bucketIndex].Delete(cli)
+func (CB *CBroker) subscribe(cli IClient) {
+	ind := CB.getBucketIndex(cli.GetUUID())
+	CB.buckets[ind].Register(cli)
 }
 
-// func (CB *CBroker) CheckOnline(cli *ClientDeps) {
-// 	CB.once.Do(CB.spectate)
-// 	indShard := pkg.Hash(cli.Name, maxShards)
-// 	CB.shards[indShard].CheckOnline(cli)
-// }
+func (CB *CBroker) unsubscribe(cli IClient) {
+	ind := CB.getBucketIndex(cli.GetUUID())
+	CB.buckets[ind].Delete(cli)
+}
+
+func (CB *CBroker) send(ctx context.Context, message interface{}) error {
+
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
+	var cancel context.CancelFunc
+	if _, ok := ctx.Deadline(); !ok {
+		ctx, cancel = context.WithTimeout(ctx, CtxSendTimeout)
+		defer cancel()
+	}
+
+	isolatingMsg := make([]*wrappedMessage, len(CB.buckets))
+
+	id := utils.GenerateRandomUint64()
+	for i := range len(isolatingMsg) {
+		isolatingMsg[i] = &wrappedMessage{
+			id:      id,
+			status:  NotDef, // статус не определен
+			message: message,
+		}
+	}
+
+	var wg sync.WaitGroup
+	for i, bucket := range CB.buckets {
+		wg.Add(1)
+		go func(idx int, b *Bucket) {
+			defer wg.Done()
+			select {
+			case b.messages <- isolatingMsg[idx]:
+			case <-ctx.Done():
+			}
+		}(i, bucket)
+	}
+	wg.Wait()
+
+	if ctx.Err() != nil {
+		for _, m := range isolatingMsg {
+			m.status = Cancelled // отменено
+		}
+		return ctx.Err()
+	}
+
+	for _, m := range isolatingMsg {
+		m.status = Ready // готово к отправке клиентам
+	}
+
+	return nil
+}
+
+func (CB *CBroker) getBucketIndex(uuid uint64) uint64 {
+	hash := uuid*0x9e3779b97f4a7c15 ^ CB.seed
+	return hash & CB.mask
+}
