@@ -1,4 +1,4 @@
-package broker
+package custombroker
 
 // import (
 // 	"context"
@@ -79,9 +79,9 @@ type TestClient struct {
 	count int
 }
 
-func NewTestClient(id uint64, name string, bufSize int) *TestClient {
+func NewTestClient(name string, bufSize int) *TestClient {
 	client := &TestClient{
-		Client: NewClient(id, name, bufSize),
+		Client: NewClient(name, bufSize),
 	}
 	return client
 }
@@ -267,20 +267,22 @@ func (client *TestClient) send(message interface{}) {
 
 // Дополнительный тест для проверки отправки под большей нагрузкой
 func TestBrokerLoad(t *testing.T) {
-	broker, _ := NewCBroker(2, 2000) // Меньше бакетов для более концентрированной нагрузки
+	broker, _ := NewCBroker(3, 200, 40) // Меньше бакетов для более концентрированной нагрузки
 	ctx := context.Background()
 
 	var successCount int32
 	var errorCount int32
 
+	clientCount := 10000
 	// Создаем клиентов и сразу подписываем
-	clients := make([]*TestClient, 500)
-	for i := 0; i < 500; i++ {
-		clients[i] = NewTestClient(uint64(i), "loadclient"+strconv.Itoa(i), 100)
-		broker.subscribe(clients[i])
+	clients := make([]*TestClient, clientCount)
+	for i := 0; i < clientCount; i++ {
+		clients[i] = NewTestClient("loadclient"+strconv.Itoa(i), 100)
+		broker.Subscribe(clients[i])
+		time.Sleep(1 * time.Millisecond)
 	}
 
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(5 * time.Second)
 
 	// Отправляем сообщения параллельно
 	var wg sync.WaitGroup
@@ -298,7 +300,7 @@ func TestBrokerLoad(t *testing.T) {
 			ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 			defer cancel()
 
-			if err := broker.send(ctx, msg); err != nil {
+			if err := broker.Send(ctx, msg); err != nil {
 				atomic.AddInt32(&errorCount, 1)
 			} else {
 				atomic.AddInt32(&successCount, 1)
@@ -306,13 +308,9 @@ func TestBrokerLoad(t *testing.T) {
 		}(i)
 	}
 	wg.Wait()
-	time.Sleep(5 * time.Second)
+	time.Sleep(6 * time.Second)
 
 	duration := time.Since(startTime)
-
-	t.Logf("Load test completed in %v", duration)
-	t.Logf("Successful sends: %d, Errors: %d", successCount, errorCount)
-	// t.Logf("Throughput: %.2f messages/second", float64(1000)/duration.Seconds())
 
 	// Проверяем доставку
 	totalReceived := 0
@@ -322,6 +320,9 @@ func TestBrokerLoad(t *testing.T) {
 		t.Logf("Client %d received %d messages", i, client.count)
 	}
 
+	t.Logf("Load test completed in %v", duration)
+	t.Logf("Successful sends: %d, Errors: %d", successCount, errorCount)
+	// t.Logf("Throughput: %.2f messages/second", float64(1000)/duration.Seconds())
 	t.Logf("Total messages received by clients: %d", totalReceived)
 
 	//-----////
@@ -331,10 +332,10 @@ func TestBrokerLoad(t *testing.T) {
 	// Проверяем необработанные сообщения в бакетах
 	totalStuck := 0
 	for i, bucket := range broker.buckets {
-		dequeSize := len(bucket.queue.queue)
+		dequeSize := len(bucket.messageQueue.queue)
 
-		stuckInToSend := len(bucket.toSendBuf)
-		stuckInMessages := len(bucket.messages)
+		stuckInToSend := len(bucket.messageQueue.getBuffer())
+		stuckInMessages := len(bucket.inputMessageChan)
 
 		totalStuck += dequeSize + stuckInToSend + stuckInMessages
 
@@ -352,9 +353,8 @@ func TestBrokerLoad(t *testing.T) {
 	for i, bucket := range broker.buckets {
 
 		statusCount := make(map[uint8]int)
-		for _, msg := range bucket.queue.queue {
-			// statusCount[(*msg.Status)]++
-			statusCount[msg.status]++
+		for _, msg := range bucket.messageQueue.queue {
+			statusCount[msg.Status]++
 		}
 
 		t.Logf("Bucket %d - Status distribution: %v", i, statusCount)

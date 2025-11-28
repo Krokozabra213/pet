@@ -45,7 +45,7 @@ func (builder *ChatAppBuilder) Business(
 }
 
 func (builder *ChatAppBuilder) Handler(business chatgrpc.IBusiness) chat.ChatServer {
-	return chatgrpc.New(business)
+	return chatgrpc.New(builder.log, business)
 }
 
 func (builder *ChatAppBuilder) BuildGRPCApp(handler chat.ChatServer) *appgrpc.App {

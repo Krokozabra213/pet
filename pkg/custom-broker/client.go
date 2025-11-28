@@ -1,6 +1,6 @@
-package broker
+package custombroker
 
-import "github.com/Krokozabra213/sso/pkg/broker/utils"
+import brokerutils "github.com/Krokozabra213/sso/pkg/custom-broker/utils"
 
 type Client struct {
 	uuid uint64
@@ -9,9 +9,9 @@ type Client struct {
 	done chan struct{}
 }
 
-func NewClient(id uint64, name string, bufferSize int) *Client {
+func NewClient(name string, bufferSize int) *Client {
 	return &Client{
-		uuid: utils.GenerateRandomUint64(),
+		uuid: brokerutils.GenerateRandomUint64(),
 		name: name,
 		buf:  make(chan interface{}, bufferSize),
 		done: make(chan struct{}),
@@ -26,15 +26,18 @@ func (cli *Client) GetName() string {
 	return cli.name
 }
 
-// func (cli *Client) GetBuffer() chan interface{} {
-// 	return cli.buf
-// }
+func (cli *Client) GetBuffer() chan interface{} {
+	return cli.buf
+}
 
-// func (cli *Client) GetDone() chan struct{} {
-// 	return cli.done
-// }
+func (cli *Client) GetDone() chan struct{} {
+	return cli.done
+}
 
 func (cli *Client) Close() {
+	if cli == nil {
+		return
+	}
 	close(cli.done)
 	close(cli.buf)
 }
@@ -53,8 +56,8 @@ func (cli *Client) send(message interface{}) {
 type IClient interface {
 	GetUUID() uint64
 	GetName() string
-	// GetBuffer() chan interface{}
-	// GetDone() chan struct{}
+	GetBuffer() chan interface{}
+	GetDone() chan struct{}
 	Close()
 	send(message interface{})
 }

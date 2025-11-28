@@ -6,7 +6,10 @@ import (
 
 	"github.com/Krokozabra213/protos/gen/go/proto/chat"
 	"github.com/Krokozabra213/sso/configs/chatconfig"
-	"github.com/Krokozabra213/sso/internal/chat/domain"
+
+	// "github.com/Krokozabra213/sso/internal/chat/domain"
+	// "github.com/Krokozabra213/sso/internal/chat/repository/broker"
+	custombroker "github.com/Krokozabra213/sso/pkg/custom-broker"
 )
 
 const (
@@ -14,7 +17,7 @@ const (
 )
 
 type IClientRepo interface {
-	Subscribe(client *domain.Client) error
+	Subscribe(client custombroker.IClient) error
 	Unsubscribe(id int64) error
 }
 
@@ -41,26 +44,18 @@ func New(
 	}
 }
 
-func (a *Chat) Subscribe(userID int64, username string) (chan interface{}, chan struct{}, error) {
+func (a *Chat) Subscribe(username string) (<-chan interface{}, chan struct{}, uint64, error) {
 
-	client := &domain.Client{
-		ID:   userID,
-		Name: username,
-		Buf:  make(chan interface{}, BufferSize), // для получения сообщений
-		Done: make(chan struct{}),                // для graceful shutdown
-	}
-
-	fmt.Println(client)
+	client := custombroker.NewClient(username, BufferSize)
 
 	err := a.clientRepo.Subscribe(client)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, 0, err
 	}
-
-	return client.Buf, client.Done, nil
+	return client.GetBuffer(), client.GetDone(), client.GetUUID(), nil
 }
 
-func (a *Chat) Unsubscribe(userID int64) error {
+func (a *Chat) Unsubscribe(uuid int64) error {
 
 	a.clientRepo.Unsubscribe(userID)
 

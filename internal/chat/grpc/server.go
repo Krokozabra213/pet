@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 
 	"github.com/Krokozabra213/protos/gen/go/proto/chat"
 	"google.golang.org/grpc/codes"
@@ -12,7 +12,7 @@ import (
 )
 
 type IBusiness interface {
-	Subscribe(userID int64, username string) (chan interface{}, chan struct{}, error)
+	Subscribe(username string) (chan interface{}, chan struct{}, uint64, error)
 	EntryPoint(msg *chat.ClientMessage) error
 	Unsubscribe(userID int64) error
 }
@@ -20,34 +20,50 @@ type IBusiness interface {
 type ServerAPI struct {
 	chat.UnimplementedChatServer
 	Business IBusiness
+	Log      *slog.Logger
 }
 
-func New(business IBusiness) *ServerAPI {
+func New(log *slog.Logger, business IBusiness) *ServerAPI {
 	return &ServerAPI{
 		Business: business,
+		Log:      log,
 	}
 }
 
 func (s *ServerAPI) ChatStream(stream chat.Chat_ChatStreamServer) error {
+	const op = "chat.ChatStreamHandler"
+	log := s.Log.With(
+		slog.String("op", op),
+	)
 
-	fmt.Println("пришел запрос")
 	ctx := stream.Context()
+	if ctx.Err() != nil {
+		return status.Error(codes.Aborted, ctx.Err().Error())
+	}
 
 	// Получаем первое сообщение - Join
 	req, err := stream.Recv()
 	if err != nil {
-		return fmt.Errorf("failed to receive initial message: %w", err)
+		log.Error("failed recv join msg", slog.String("error", err.Error()))
+		if errors.Is(err, io.EOF) {
+			return status.Error(codes.Canceled, ErrDisconect.Error())
+		}
+		return status.Error(codes.Internal, ErrStream.Error())
 	}
 
 	joinMsg, ok := req.Type.(*chat.ClientMessage_Join)
 	if !ok {
-		return status.Error(codes.InvalidArgument, "first message must be Join")
+		log.Info("failed parse joinMsg")
+		return status.Error(codes.InvalidArgument, ErrFirstMessage.Error())
 	}
 
 	userID := joinMsg.Join.GetUserId()
-	buffer, done, err := s.Business.Subscribe(userID, joinMsg.Join.GetUsername())
+	username := joinMsg.Join.GetUsername()
+
+	buffer, done, userUUID, err := s.Business.Subscribe(username)
 	if err != nil {
-		return fmt.Errorf("failed to subscribe: %w", err)
+		log.Error("failed subscribe", slog.String("error", err.Error()))
+		return status.Error(codes.Internal, err.Error())
 	}
 	defer close(done)
 	defer close(buffer)
