@@ -25,7 +25,10 @@ func main() {
 	log := logger.SetupLogger(env)
 	cfg := chatconfig.Load(env, test)
 
-	cfgJSON, _ := json.MarshalIndent(cfg, "", "  ")
+	cfgJSON, err := json.MarshalIndent(cfg, "", "  ")
+	if err != nil {
+		panic(err)
+	}
 	log.Info("loaded config", slog.String("config", string(cfgJSON)))
 
 	appBuilder := app.NewAppBuilder(cfg, log)

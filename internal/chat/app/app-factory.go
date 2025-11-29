@@ -5,12 +5,17 @@ import (
 	appgrpc "github.com/Krokozabra213/sso/internal/chat/app/grpc"
 	chatBusiness "github.com/Krokozabra213/sso/internal/chat/business"
 	chatgrpc "github.com/Krokozabra213/sso/internal/chat/grpc"
+	custombroker "github.com/Krokozabra213/sso/pkg/custom-broker"
 )
 
 type IAppBuilder interface {
+
+	// Connect
+	BrokerConn() *custombroker.CBroker
+
 	// Repository providers
-	ClientProvider() chatBusiness.IClientRepo
-	MessageProvider() chatBusiness.IMessageRepo
+	ClientProvider(brokerConn *custombroker.CBroker) chatBusiness.IClientRepo
+	MessageProvider(brokerConn *custombroker.CBroker) chatBusiness.IMessageRepo
 
 	// Business logic layer
 	Business(
@@ -37,9 +42,11 @@ func NewAppFactory(builder IAppBuilder) *AppFactory {
 
 func (fact *AppFactory) Create() *appgrpc.App {
 
+	brokerConn := fact.builder.BrokerConn()
+
 	// Repositories
-	ClientRepo := fact.builder.ClientProvider()
-	MessageRepo := fact.builder.MessageProvider()
+	ClientRepo := fact.builder.ClientProvider(brokerConn)
+	MessageRepo := fact.builder.MessageProvider(brokerConn)
 
 	// Business-Logic
 	business := fact.builder.Business(

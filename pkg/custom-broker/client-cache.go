@@ -28,9 +28,18 @@ func (cc *clientCache) register(cli IClient) {
 	cc.mu.Unlock()
 }
 
-func (cc *clientCache) delete(cli IClient) {
+// func (cc *clientCache) delete(cli IClient) {
+// 	cc.mu.Lock()
+// 	delete(cc.clients, cli.GetUUID())
+// 	cc.mu.Unlock()
+// }
+
+func (cc *clientCache) delete(uuid uint64) {
 	cc.mu.Lock()
-	delete(cc.clients, cli.GetUUID())
+	if client, ok := cc.clients[uuid]; ok {
+		client.Close()
+		delete(cc.clients, uuid)
+	}
 	cc.mu.Unlock()
 }
 

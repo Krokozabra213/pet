@@ -92,7 +92,11 @@ func (CB *CBroker) initBuckets(cap int) {
 	}
 }
 
-func (CB *CBroker) Subscribe(cli IClient) error {
+func (CB *CBroker) Subscribe(ctx context.Context, cli IClient) error {
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
+	// TODO: отправлять сообщение клиентам что пользователь подключился
 	if CB.clientCount > CB.maxClientCount {
 		return ErrServerIsFull
 	}
@@ -101,16 +105,22 @@ func (CB *CBroker) Subscribe(cli IClient) error {
 	return nil
 }
 
-func (CB *CBroker) Unsubscribe(cli IClient) {
-	ind := CB.getBucketIndex(cli.GetUUID())
-	CB.buckets[ind].delete(cli)
+func (CB *CBroker) Unsubscribe(uuid uint64) error {
+	// TODO: отправлять сообщение клиентам что пользователь отключился
+
+	ind := CB.getBucketIndex(uuid)
+	CB.buckets[ind].delete(uuid)
+	return nil
 }
 
 // Получаем ctx, message от клиента -> отправляем во все buckets ->
 // -> проверяем ctx.Err -> меняем статус сообщения
 func (CB *CBroker) Send(ctx context.Context, message interface{}) error {
-	if err := ctx.Err(); err != nil {
-		return err
+	// if err := ctx.Err(); err != nil {
+	// 	return err
+	// }
+	if ctx.Err() != nil {
+		return ctx.Err()
 	}
 
 	var cancel context.CancelFunc

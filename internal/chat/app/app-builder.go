@@ -9,6 +9,7 @@ import (
 	chatBusiness "github.com/Krokozabra213/sso/internal/chat/business"
 	chatgrpc "github.com/Krokozabra213/sso/internal/chat/grpc"
 	"github.com/Krokozabra213/sso/internal/chat/repository/broker"
+	custombroker "github.com/Krokozabra213/sso/pkg/custom-broker"
 )
 
 type ChatAppBuilder struct {
@@ -23,14 +24,24 @@ func NewAppBuilder(cfg *chatconfig.Config, log *slog.Logger) *ChatAppBuilder {
 	}
 }
 
-// repositories
+// connects
 // TODO:
-func (builder *ChatAppBuilder) ClientProvider() chatBusiness.IClientRepo {
-	return broker.New()
+func (builder *ChatAppBuilder) BrokerConn() *custombroker.CBroker {
+	broker, err := custombroker.NewCBroker(4, 1000, 10)
+	if err != nil {
+		panic(err)
+	}
+	return broker
 }
 
-func (builder *ChatAppBuilder) MessageProvider() chatBusiness.IMessageRepo {
-	return broker.New()
+// repositories
+// TODO:
+func (builder *ChatAppBuilder) ClientProvider(brokerConn *custombroker.CBroker) chatBusiness.IClientRepo {
+	return broker.New(brokerConn)
+}
+
+func (builder *ChatAppBuilder) MessageProvider(brokerConn *custombroker.CBroker) chatBusiness.IMessageRepo {
+	return broker.New(brokerConn)
 }
 
 // business-logic

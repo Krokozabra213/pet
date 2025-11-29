@@ -278,7 +278,7 @@ func TestBrokerLoad(t *testing.T) {
 	clients := make([]*TestClient, clientCount)
 	for i := 0; i < clientCount; i++ {
 		clients[i] = NewTestClient("loadclient"+strconv.Itoa(i), 100)
-		broker.Subscribe(clients[i])
+		broker.Subscribe(context.Background(), clients[i])
 		time.Sleep(1 * time.Millisecond)
 	}
 
@@ -311,6 +311,12 @@ func TestBrokerLoad(t *testing.T) {
 	time.Sleep(6 * time.Second)
 
 	duration := time.Since(startTime)
+
+	for _, c := range clients {
+		broker.Unsubscribe(c.GetUUID())
+	}
+
+	time.Sleep(4 * time.Second)
 
 	// Проверяем доставку
 	totalReceived := 0
@@ -358,6 +364,11 @@ func TestBrokerLoad(t *testing.T) {
 		}
 
 		t.Logf("Bucket %d - Status distribution: %v", i, statusCount)
+	}
+
+	for _, bucket := range broker.buckets {
+		t.Log(len(bucket.clientCache.clients))
+
 	}
 
 }

@@ -3,7 +3,6 @@ package suite
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/Krokozabra213/protos/gen/go/proto/chat"
 	"google.golang.org/grpc"
@@ -12,19 +11,14 @@ import (
 
 type ChatSuite struct {
 	*testing.T
-	Conn   *grpc.ClientConn
-	Stream chat.Chat_ChatStreamClient
+	Conn    *grpc.ClientConn
+	Streams []chat.Chat_ChatStreamClient
 }
 
 func New(t *testing.T) (context.Context, *ChatSuite) {
 	t.Helper()
 
-	ctx, cancelCtx := context.WithTimeout(context.Background(), 30*time.Second)
-
-	t.Cleanup(func() {
-		t.Helper()
-		cancelCtx()
-	})
+	ctx := context.Background()
 
 	conn, err := grpc.NewClient(
 		"localhost:44045",
@@ -34,15 +28,23 @@ func New(t *testing.T) (context.Context, *ChatSuite) {
 		t.Fatalf("Failed to connect: %v", err)
 	}
 
-	chatClient := chat.NewChatClient(conn)
-	stream, err := chatClient.ChatStream(ctx)
-	if err != nil {
-		t.Fatalf("Failed to create stream: %v", err)
+	clients := make([]chat.ChatClient, 0, 50)
+	for i := 0; i < 50; i++ {
+		clients = append(clients, chat.NewChatClient(conn))
+	}
+
+	streams := make([]chat.Chat_ChatStreamClient, 0, 50)
+	for i := 0; i < 50; i++ {
+		stream, err := clients[i].ChatStream(ctx)
+		if err != nil {
+			t.Fatalf("Failed to create stream: %v", err)
+		}
+		streams = append(streams, stream)
 	}
 
 	return ctx, &ChatSuite{
-		T:      t,
-		Stream: stream,
+		T:       t,
+		Streams: streams,
 	}
 }
 

@@ -1,8 +1,9 @@
 package chatgrpc
 
 import (
+	"context"
+	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"log/slog"
 
@@ -11,10 +12,15 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+const (
+	ErrChanCap = 2
+)
+
 type IBusiness interface {
-	Subscribe(username string) (chan interface{}, chan struct{}, uint64, error)
-	EntryPoint(msg *chat.ClientMessage) error
-	Unsubscribe(userID int64) error
+	Subscribe(ctx context.Context, username string) (<-chan interface{}, chan struct{}, uint64, error)
+	SendMessage(ctx context.Context, cliSendMsg *chat.ClientMessage) error
+	// EntryPoint(msg *chat.ClientMessage) error
+	Unsubscribe(userID uint64) error
 }
 
 type ServerAPI struct {
@@ -57,30 +63,30 @@ func (s *ServerAPI) ChatStream(stream chat.Chat_ChatStreamServer) error {
 		return status.Error(codes.InvalidArgument, ErrFirstMessage.Error())
 	}
 
-	userID := joinMsg.Join.GetUserId()
+	msg, _ := json.MarshalIndent(joinMsg, "", "  ")
+	log.Info("message", slog.String("message", string(msg)))
+
 	username := joinMsg.Join.GetUsername()
 
-	buffer, done, userUUID, err := s.Business.Subscribe(username)
+	buffer, done, userUUID, err := s.Business.Subscribe(ctx, username)
 	if err != nil {
 		log.Error("failed subscribe", slog.String("error", err.Error()))
 		return status.Error(codes.Internal, err.Error())
 	}
-	defer close(done)
-	defer close(buffer)
-	defer s.Business.Unsubscribe(joinMsg.Join.GetUserId())
+	defer s.Business.Unsubscribe(userUUID)
 
 	// Канал для ошибок из горутин
-	errCh := make(chan error, 2)
+	errCh := make(chan error, ErrChanCap)
 
 	// Запускаем отправку сообщений server -> client
 	go func() {
 		if err := SendFromSrvToClient(buffer, done, joinMsg.Join.GetUserId(), stream); err != nil {
+			log.Error("failed to send message to client", "error", err)
 			select {
 			case errCh <- err:
 				// ошибка отправления
 			default:
-				// если errCh полон, логируем и продолжаем
-				log.Printf("Failed to send error to channel for user %d: %v", userID, err)
+				return // если канал полон, то перестаём пытаться отправить сообщения
 			}
 		}
 	}()
@@ -88,25 +94,23 @@ func (s *ServerAPI) ChatStream(stream chat.Chat_ChatStreamServer) error {
 	// Обрабатываем входящие сообщения от клиента
 	for {
 		select {
-		case err := <-errCh:
-			if err != nil {
-				log.Printf("Send goroutine error for user %d: %v", userID, err)
-				return fmt.Errorf("send operation failed: %w", err)
-			}
+		case err := <-errCh: // возникла ошибка отправки сообщений клиенту
+			return err
 		case <-ctx.Done():
 			return ctx.Err() // клиент отключился
 		default:
 			clientMsg, err := stream.Recv()
 			if err != nil {
 				if errors.Is(err, io.EOF) {
-					return status.Error(codes.OK, "client disconnected")
+					return status.Error(codes.OK, ErrDisconect.Error())
 				}
-				return fmt.Errorf("failed to receive message: %w", err)
+				log.Error("failed to receive message", "err", err)
+				return ErrRecvMessage
 			}
 
-			if err := s.Business.EntryPoint(clientMsg); err != nil {
-				log.Printf("Business.EntryPoint error: %v", err)
-				return fmt.Errorf("failed to enter chat: %w", err)
+			if err := s.Business.SendMessage(ctx, clientMsg); err != nil {
+				log.Error("failed send message", "err", err)
+				return err
 			}
 		}
 	}
