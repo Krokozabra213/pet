@@ -22,17 +22,6 @@ type RedisDB struct {
 	Cache int
 }
 
-// func GetProjectRoot() string {
-// 	// Получаем путь к текущему файлу
-// 	_, filename, _, _ := runtime.Caller(0)
-
-// 	// Поднимаемся до корня проекта (где лежит go.mod)
-// 	root := filepath.Join(filepath.Dir(filename), "..", "..")
-// 	absRoot, _ := filepath.Abs(root)
-
-// 	return absRoot
-// }
-
 func FindProjectRoot() (string, error) {
 	currentDir, err := os.Getwd()
 	if err != nil {

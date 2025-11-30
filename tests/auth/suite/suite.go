@@ -16,6 +16,12 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+const (
+	EnvLocal = "local"
+	EnvProd  = "prod"
+	EnvDev   = "dev"
+)
+
 type SSOSuite struct {
 	*testing.T
 	Cfg        *ssoconfig.Config
@@ -27,7 +33,10 @@ type SSOSuite struct {
 func New(t *testing.T) (context.Context, *SSOSuite) {
 	t.Helper()
 
-	cfg := ssoconfig.Load("local", true)
+	env := EnvLocal
+
+	cfg := ssoconfig.Load(env, true)
+	t.Logf("Config: %+v", cfg)
 
 	ctx, cancelCtx := context.WithTimeout(context.Background(), 30*time.Second)
 

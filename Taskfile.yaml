@@ -10,10 +10,6 @@ tasks:
     desc: "automigrating postgres testdb"
     cmds:
       - go run cmd/migrations/main.go -host=localhost -user=user_test -password=password_test -dbname=postgres_test -port=5556 -sslmode=disable
-  test:
-    desc: "test app"
-    cmds:
-      - go test -v -count=1 ./tests
   docker-prod:
     desc: "docker compose up for production env"
     cmds:
@@ -22,3 +18,15 @@ tasks:
     desc: "docker compose up for local env"
     cmds:
       - docker compose up postgres_test redis redis-commander
+  test:
+    desc: "test app"
+    cmds:
+      - go test -v -count=1 ./tests/...
+  test-chat:
+    desc: "test chat service"
+    cmds:
+      - go test -v -count=1 ./tests/chat
+  test-auth:
+    desc: "test chat service"
+    cmds:
+      - go test -v -count=1 ./tests/auth

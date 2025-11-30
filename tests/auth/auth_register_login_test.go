@@ -7,7 +7,7 @@ import (
 	"github.com/Krokozabra213/protos/gen/go/proto/sso"
 	"github.com/Krokozabra213/sso/internal/auth/lib/jwt"
 	keymanager "github.com/Krokozabra213/sso/internal/auth/lib/key-manager"
-	"github.com/Krokozabra213/sso/tests/suite"
+	"github.com/Krokozabra213/sso/tests/auth/suite"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
