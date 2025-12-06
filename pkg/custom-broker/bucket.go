@@ -1,7 +1,6 @@
 package custombroker
 
 import (
-	"log"
 	"time"
 
 	WP "github.com/Krokozabra213/sso/pkg/custom-broker/wrapped-message"
@@ -76,7 +75,6 @@ func (S *Bucket) garbageCollector() {
 }
 
 func (S *Bucket) register(cli IClient) {
-	log.Printf("user %s joined/n", cli.GetName())
 	S.clientCache.register(cli)
 }
 

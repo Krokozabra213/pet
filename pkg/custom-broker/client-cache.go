@@ -1,6 +1,10 @@
 package custombroker
 
-import "sync"
+import (
+	"encoding/json"
+	"log"
+	"sync"
+)
 
 type usersMap map[uint64]IClient
 
@@ -26,18 +30,13 @@ func (cc *clientCache) register(cli IClient) {
 	cc.mu.Lock()
 	cc.clients[cli.GetUUID()] = cli
 	cc.mu.Unlock()
+	log.Printf("%s joined to server\n", cli.GetName())
 }
-
-// func (cc *clientCache) delete(cli IClient) {
-// 	cc.mu.Lock()
-// 	delete(cc.clients, cli.GetUUID())
-// 	cc.mu.Unlock()
-// }
 
 func (cc *clientCache) delete(uuid uint64) {
 	cc.mu.Lock()
 	if client, ok := cc.clients[uuid]; ok {
-		client.Close()
+		client.close()
 		delete(cc.clients, uuid)
 	}
 	cc.mu.Unlock()
@@ -45,6 +44,8 @@ func (cc *clientCache) delete(uuid uint64) {
 
 func (cc *clientCache) distributingMessages(message interface{}) {
 	cc.mu.Lock()
+	msg, _ := json.MarshalIndent(message, "", "  ")
+	log.Println(string(msg))
 	for _, client := range cc.clients {
 		client.send(message)
 	}

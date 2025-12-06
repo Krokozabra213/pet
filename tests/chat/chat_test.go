@@ -11,8 +11,9 @@ import (
 
 func TestRegisterLogin_Errors(t *testing.T) {
 	_, st := suite.New(t)
+	_ = st
 
-	messages := make([]*chat.ClientMessage, 0, 50)
+	joinmessages := make([]*chat.ClientMessage, 0, 50)
 	for i := 0; i < 50; i++ {
 		msg := &chat.ClientMessage{
 			Type: &chat.ClientMessage_Join{
@@ -22,18 +23,36 @@ func TestRegisterLogin_Errors(t *testing.T) {
 				},
 			},
 		}
-		messages = append(messages, msg)
+		joinmessages = append(joinmessages, msg)
 	}
-
-	_ = st
 
 	i := 0
 	for _, stream := range st.Streams {
-		stream.Send(messages[i])
+		stream.Send(joinmessages[i])
+		i++
+		// time.Sleep(time.Second)
+	}
+
+	sendMessages := make([]*chat.ClientMessage, 0, 50)
+	for i := 0; i < 50; i++ {
+		msg := &chat.ClientMessage{
+			Type: &chat.ClientMessage_SendMessage{
+				SendMessage: &chat.SendMessageAction{
+					Content: "content" + strconv.Itoa(i),
+				},
+			},
+		}
+		sendMessages = append(sendMessages, msg)
+	}
+
+	i = 0
+	for _, stream := range st.Streams {
+		time.Sleep(5 * time.Second)
+		stream.Send(sendMessages[i])
 		i++
 	}
 
-	time.Sleep(16 * time.Second)
+	time.Sleep(10 * time.Second)
 
 	// for _, msg := range messages {
 	// 	if err := st.Stream.Send(msg); err != nil {
