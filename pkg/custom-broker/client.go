@@ -9,6 +9,15 @@ type Client struct {
 	done chan struct{}
 }
 
+type IClient interface {
+	GetUUID() uint64
+	GetName() string
+	GetBuffer() chan interface{}
+	GetDone() chan struct{}
+	close()
+	send(message interface{})
+}
+
 func NewClient(name string, bufferSize int) *Client {
 	return &Client{
 		uuid: brokerutils.GenerateRandomUint64(),
@@ -34,7 +43,7 @@ func (cli *Client) GetDone() chan struct{} {
 	return cli.done
 }
 
-func (cli *Client) Close() {
+func (cli *Client) close() {
 	if cli == nil {
 		return
 	}
@@ -51,13 +60,4 @@ func (cli *Client) send(message interface{}) {
 	default:
 		cli.buf <- message
 	}
-}
-
-type IClient interface {
-	GetUUID() uint64
-	GetName() string
-	GetBuffer() chan interface{}
-	GetDone() chan struct{}
-	Close()
-	send(message interface{})
 }

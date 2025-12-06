@@ -6,6 +6,7 @@ import (
 
 	"github.com/Krokozabra213/sso/internal/auth/domain"
 	"github.com/Krokozabra213/sso/internal/auth/repository/storage"
+	contexthandler "github.com/Krokozabra213/sso/pkg/context-handler"
 	redispet "github.com/Krokozabra213/sso/pkg/db/redis-pet"
 )
 
@@ -25,7 +26,7 @@ func New(RDB *redispet.RDB) *Redis {
 
 func (r *Redis) SaveToken(parentCtx context.Context, token string, expiresAt time.Time) error {
 
-	ctx, cancel := storage.EnsureCtxTimeout(parentCtx, ctxTimeout)
+	ctx, cancel := contexthandler.EnsureCtxTimeout(parentCtx, ctxTimeout)
 	defer cancel()
 
 	if ctx.Err() != nil {
@@ -50,7 +51,7 @@ func (r *Redis) SaveToken(parentCtx context.Context, token string, expiresAt tim
 
 func (r *Redis) CheckToken(parentCtx context.Context, token string) (bool, error) {
 
-	ctx, cancel := storage.EnsureCtxTimeout(parentCtx, ctxTimeout)
+	ctx, cancel := contexthandler.EnsureCtxTimeout(parentCtx, ctxTimeout)
 	defer cancel()
 
 	if ctx.Err() != nil {

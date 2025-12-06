@@ -1,32 +1,21 @@
-package chatgrpc
+package sendtoclienthander
 
 import (
 	"context"
 	"errors"
-	"fmt"
-	"io"
 
-	"github.com/Krokozabra213/protos/gen/go/proto/chat"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
-func ValidateMessage(message *chat.ClientMessage) (interface{}, error) {
-	switch msg := message.Type.(type) {
-	// проверяем тип сообщения
-	case *chat.ClientMessage_SendMessage:
-		return msg.SendMessage, nil
-	default:
-		return nil, fmt.Errorf("%w: %T", ErrUnknownMessageType, message)
-	}
-}
+var (
+	ErrUnknownMessageType = errors.New("unknown message type")
+	ErrGracefulShutdown   = errors.New("graceful shutdown")
 
-func ValidateStreamRecvErrors(err error) error {
-	if errors.Is(err, io.EOF) {
-		return status.Error(codes.Canceled, ErrDisconect.Error())
-	}
-	return status.Error(codes.Internal, ErrStream.Error())
-}
+	ErrContextCancelled = errors.New("stream cancelled")
+	ErrContextDeadline  = errors.New("stream deadline exceeded")
+	ErrContextUnknown   = errors.New("stream context unknown error")
+)
 
 func HandleStreamContextError(ctx context.Context) error {
 

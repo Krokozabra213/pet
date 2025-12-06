@@ -9,7 +9,9 @@ import (
 	chatBusiness "github.com/Krokozabra213/sso/internal/chat/business"
 	chatgrpc "github.com/Krokozabra213/sso/internal/chat/grpc"
 	"github.com/Krokozabra213/sso/internal/chat/repository/broker"
+	postgresrepo "github.com/Krokozabra213/sso/internal/chat/repository/storage/postgres-repo"
 	custombroker "github.com/Krokozabra213/sso/pkg/custom-broker"
+	postgrespet "github.com/Krokozabra213/sso/pkg/db/postgres-pet"
 )
 
 type ChatAppBuilder struct {
@@ -27,11 +29,18 @@ func NewAppBuilder(cfg *chatconfig.Config, log *slog.Logger) *ChatAppBuilder {
 // connects
 // TODO:
 func (builder *ChatAppBuilder) BrokerConn() *custombroker.CBroker {
-	broker, err := custombroker.NewCBroker(4, 1000, 10)
+	// TODO: Вынести в конфиг константы
+	broker, err := custombroker.NewCBroker(2, 1000, 10)
 	if err != nil {
 		panic(err)
 	}
 	return broker
+}
+
+func (builder *ChatAppBuilder) PGConn() *postgrespet.PGDB {
+	// TODO: раскомментировать
+	// return postgrespet.NewPGDB(builder.cfg.DB.DSN)
+	return nil
 }
 
 // repositories
@@ -44,14 +53,20 @@ func (builder *ChatAppBuilder) MessageProvider(brokerConn *custombroker.CBroker)
 	return broker.New(brokerConn)
 }
 
+func (builder *ChatAppBuilder) DefaultMessageSaver(dbconn *postgrespet.PGDB) chatBusiness.IDefaultMessageSaver {
+	return postgresrepo.New(dbconn)
+}
+
 // business-logic
 func (builder *ChatAppBuilder) Business(
 	clientProvider chatBusiness.IClientRepo,
 	messageProvider chatBusiness.IMessageRepo,
+	defaultMessageSaver chatBusiness.IDefaultMessageSaver,
 ) chatgrpc.IBusiness {
 	return chatBusiness.New(
 		builder.log, builder.cfg,
 		clientProvider, messageProvider,
+		defaultMessageSaver,
 	)
 }
 

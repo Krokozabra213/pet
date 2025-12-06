@@ -6,6 +6,7 @@ import (
 
 	"github.com/Krokozabra213/sso/internal/auth/domain"
 	"github.com/Krokozabra213/sso/internal/auth/repository/storage"
+	contexthandler "github.com/Krokozabra213/sso/pkg/context-handler"
 	postgrespet "github.com/Krokozabra213/sso/pkg/db/postgres-pet"
 )
 
@@ -27,7 +28,7 @@ func (p *Postgres) SaveUser(
 	parentCtx context.Context, user *domain.User,
 ) (uid uint, err error) {
 
-	ctx, cancel := storage.EnsureCtxTimeout(parentCtx, ctxTimeout)
+	ctx, cancel := contexthandler.EnsureCtxTimeout(parentCtx, ctxTimeout)
 	defer cancel()
 
 	if ctx.Err() != nil {
@@ -49,7 +50,7 @@ func (p *Postgres) User(
 	parentCtx context.Context, username string,
 ) (*domain.User, error) {
 
-	ctx, cancel := storage.EnsureCtxTimeout(parentCtx, ctxTimeout)
+	ctx, cancel := contexthandler.EnsureCtxTimeout(parentCtx, ctxTimeout)
 	defer cancel()
 
 	if ctx.Err() != nil {
@@ -71,7 +72,7 @@ func (p *Postgres) UserByID(
 	parentCtx context.Context, id int64,
 ) (*domain.User, error) {
 
-	ctx, cancel := storage.EnsureCtxTimeout(parentCtx, ctxTimeout)
+	ctx, cancel := contexthandler.EnsureCtxTimeout(parentCtx, ctxTimeout)
 	defer cancel()
 
 	if ctx.Err() != nil {
@@ -93,7 +94,7 @@ func (p *Postgres) IsAdmin(
 	parentCtx context.Context, userID int64,
 ) (bool, error) {
 
-	ctx, cancel := storage.EnsureCtxTimeout(parentCtx, ctxTimeout)
+	ctx, cancel := contexthandler.EnsureCtxTimeout(parentCtx, ctxTimeout)
 	defer cancel()
 
 	if ctx.Err() != nil {
@@ -118,7 +119,7 @@ func (p *Postgres) AppByID(
 	parentCtx context.Context, appID int,
 ) (*domain.App, error) {
 
-	ctx, cancel := storage.EnsureCtxTimeout(parentCtx, ctxTimeout)
+	ctx, cancel := contexthandler.EnsureCtxTimeout(parentCtx, ctxTimeout)
 	defer cancel()
 
 	if ctx.Err() != nil {
@@ -140,7 +141,7 @@ func (p *Postgres) SaveToken(
 	parentCtx context.Context, token *domain.BlackToken,
 ) (err error) {
 
-	ctx, cancel := storage.EnsureCtxTimeout(parentCtx, ctxTimeout)
+	ctx, cancel := contexthandler.EnsureCtxTimeout(parentCtx, ctxTimeout)
 	defer cancel()
 
 	if ctx.Err() != nil {

@@ -96,7 +96,7 @@ func (CB *CBroker) Subscribe(ctx context.Context, cli IClient) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
-	// TODO: отправлять сообщение клиентам что пользователь подключился
+
 	if CB.clientCount > CB.maxClientCount {
 		return ErrServerIsFull
 	}
@@ -106,7 +106,6 @@ func (CB *CBroker) Subscribe(ctx context.Context, cli IClient) error {
 }
 
 func (CB *CBroker) Unsubscribe(uuid uint64) error {
-	// TODO: отправлять сообщение клиентам что пользователь отключился
 
 	ind := CB.getBucketIndex(uuid)
 	CB.buckets[ind].delete(uuid)
