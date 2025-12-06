@@ -7,6 +7,8 @@ import (
 
 	"github.com/Krokozabra213/protos/gen/go/proto/chat"
 	"github.com/Krokozabra213/sso/internal/chat/domain"
+	recvprocessor "github.com/Krokozabra213/sso/internal/chat/grpc/recv-processor"
+	handlersfactory "github.com/Krokozabra213/sso/internal/chat/grpc/recv-processor/handlers-factory"
 	sendtoclienthander "github.com/Krokozabra213/sso/internal/chat/grpc/send-to-client-hander"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -93,6 +95,10 @@ func (s *ServerAPI) ChatStream(stream chat.Chat_ChatStreamServer) error {
 		}
 	}()
 
+	factory := handlersfactory.New()
+	factory.InitHandlers(s.Business, ctx, userID, username)
+	processor := recvprocessor.New(factory)
+
 	// Обрабатываем входящие сообщения от клиента
 	for {
 		select {
@@ -109,20 +115,24 @@ func (s *ServerAPI) ChatStream(stream chat.Chat_ChatStreamServer) error {
 				return err
 			}
 
-			// проверяем тип сообщения
-			switch msg := clientMsg.Type.(type) {
-
-			case *chat.ClientMessage_SendMessage:
-				defaultMessage := domain.NewDefaultMessage(msg.SendMessage.GetContent(), username, userID)
-				err := s.Business.SendMessage(ctx, defaultMessage)
-				if err != nil {
-					log.Error("failed send message", "err", err)
-					return status.Error(codes.Internal, err.Error())
-				}
-
-			default:
-				return status.Error(codes.InvalidArgument, ErrUnknownMessageType.Error())
+			if err := processor.Process(clientMsg); err != nil {
+				return err
 			}
+
+			// // проверяем тип сообщения
+			// switch msg := clientMsg.Type.(type) {
+
+			// case *chat.ClientMessage_SendMessage:
+			// 	defaultMessage := domain.NewDefaultMessage(msg.SendMessage.GetContent(), username, userID)
+			// 	err := s.Business.SendMessage(ctx, defaultMessage)
+			// 	if err != nil {
+			// 		log.Error("failed send message", "err", err)
+			// 		return status.Error(codes.Internal, err.Error())
+			// 	}
+
+			// default:
+			// 	return status.Error(codes.InvalidArgument, ErrUnknownMessageType.Error())
+			// }
 		}
 	}
 }
