@@ -34,11 +34,23 @@ func TestRegisterLogin_Errors(t *testing.T) {
 	}
 
 	sendMessages := make([]*chat.ClientMessage, 0, 50)
+	// for i := 0; i < 50; i++ {
+	// 	msg := &chat.ClientMessage{
+	// 		Type: &chat.ClientMessage_SendMessage{
+	// 			SendMessage: &chat.SendMessageAction{
+	// 				Content: "content" + strconv.Itoa(i),
+	// 			},
+	// 		},
+	// 	}
+	// 	sendMessages = append(sendMessages, msg)
+	// }
+
 	for i := 0; i < 50; i++ {
 		msg := &chat.ClientMessage{
-			Type: &chat.ClientMessage_SendMessage{
-				SendMessage: &chat.SendMessageAction{
-					Content: "content" + strconv.Itoa(i),
+			Type: &chat.ClientMessage_Leave{
+				Leave: &chat.LeaveChat{
+					UserId:   1,
+					Username: "random",
 				},
 			},
 		}
