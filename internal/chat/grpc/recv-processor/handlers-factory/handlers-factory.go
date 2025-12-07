@@ -17,7 +17,7 @@ var (
 // все методы бизнес логики всех хендлеров
 type IHandlersBusiness interface {
 	// добавлять по мере необходимости
-	SendMessage(ctx context.Context, msg *domain.DefaultMessage) error
+	SendDefaultMessage(ctx context.Context, msg *domain.DefaultMessage) error
 }
 
 const (

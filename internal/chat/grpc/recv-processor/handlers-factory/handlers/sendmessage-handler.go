@@ -7,19 +7,19 @@ import (
 	"github.com/Krokozabra213/sso/internal/chat/domain"
 )
 
-type ISendMessageBusiness interface {
-	SendMessage(ctx context.Context, msg *domain.DefaultMessage) error
+type ISendDefaultMessage interface {
+	SendDefaultMessage(ctx context.Context, msg *domain.DefaultMessage) error
 }
 
 type SendMessageHandler struct {
-	Business ISendMessageBusiness
+	Business ISendDefaultMessage
 	Ctx      context.Context
 	UserID   int64
 	Username string
 }
 
 func NewSendMessageHandler(
-	business ISendMessageBusiness,
+	business ISendDefaultMessage,
 	ctx context.Context,
 	userID int64,
 	username string,
@@ -48,5 +48,5 @@ func (handler *SendMessageHandler) Handle(message *chat.ClientMessage) error {
 		handler.Username,
 		handler.UserID,
 	)
-	return handler.Business.SendMessage(handler.Ctx, defaultMessage)
+	return handler.Business.SendDefaultMessage(handler.Ctx, defaultMessage)
 }
