@@ -2,7 +2,6 @@ package chatgrpc
 
 import (
 	"context"
-	"encoding/json"
 	"log/slog"
 
 	"github.com/Krokozabra213/protos/gen/go/proto/chat"
@@ -27,7 +26,7 @@ type IChatClient interface {
 
 type IBusiness interface {
 	Subscribe(ctx context.Context, username string) (IChatClient, error)
-	SendMessage(ctx context.Context, msg *domain.DefaultMessage) error
+	SendDefaultMessage(ctx context.Context, msg *domain.DefaultMessage) error
 	Unsubscribe(userID uint64)
 }
 
@@ -69,9 +68,7 @@ func (s *ServerAPI) ChatStream(stream chat.Chat_ChatStreamServer) error {
 	username := joinMessage.Join.GetUsername()
 	userID := joinMessage.Join.GetUserId()
 
-	// логируем сообщение
-	msg, _ := json.MarshalIndent(joinMessage, "", "  ")
-	log.Debug("debug message", slog.String("message", string(msg)))
+	log.Debug("join message", "msg", req)
 
 	client, err := s.Business.Subscribe(ctx, username)
 	if err != nil {
