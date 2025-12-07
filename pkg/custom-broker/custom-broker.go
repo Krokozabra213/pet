@@ -115,9 +115,6 @@ func (CB *CBroker) Unsubscribe(uuid uint64) error {
 // Получаем ctx, message от клиента -> отправляем во все buckets ->
 // -> проверяем ctx.Err -> меняем статус сообщения
 func (CB *CBroker) Send(ctx context.Context, message interface{}) error {
-	// if err := ctx.Err(); err != nil {
-	// 	return err
-	// }
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}

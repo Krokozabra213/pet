@@ -45,7 +45,7 @@ func New(log *slog.Logger, business IBusiness) *ServerAPI {
 }
 
 func (s *ServerAPI) ChatStream(stream chat.Chat_ChatStreamServer) error {
-	const op = "chat.ChatStreamHandler"
+	const op = "chat.Handler"
 	log := s.Log.With(
 		slog.String("op", op),
 	)
@@ -84,7 +84,7 @@ func (s *ServerAPI) ChatStream(stream chat.Chat_ChatStreamServer) error {
 
 	// Запускаем отправку сообщений server -> client
 	go func() {
-		messageHandler := sendtoclienthander.New(stream, client.GetBuffer(), client.GetDone())
+		messageHandler := sendtoclienthander.New(stream, client.GetBuffer(), client.GetDone(), s.Log)
 		if err := messageHandler.Run(); err != nil {
 			select {
 			case errCh <- err:
@@ -97,13 +97,12 @@ func (s *ServerAPI) ChatStream(stream chat.Chat_ChatStreamServer) error {
 
 	factory := handlersfactory.New()
 	factory.InitHandlers(s.Business, ctx, userID, username)
-	processor := recvprocessor.New(factory)
+	processor := recvprocessor.New(s.Log, factory)
 
 	// Обрабатываем входящие сообщения от клиента
 	for {
 		select {
 		case err := <-errCh: // возникла ошибка отправки сообщений клиенту
-			log.Debug("fail", "error", err.Error())
 			return err
 		case <-ctx.Done():
 			return ctx.Err() // клиент отключился
@@ -111,6 +110,7 @@ func (s *ServerAPI) ChatStream(stream chat.Chat_ChatStreamServer) error {
 			clientMsg, err := stream.Recv()
 
 			if err != nil {
+				s.Log.Error("recv message failed", "error", err)
 				err = ValidateStreamRecvErrors(err)
 				return err
 			}
@@ -118,21 +118,6 @@ func (s *ServerAPI) ChatStream(stream chat.Chat_ChatStreamServer) error {
 			if err := processor.Process(clientMsg); err != nil {
 				return err
 			}
-
-			// // проверяем тип сообщения
-			// switch msg := clientMsg.Type.(type) {
-
-			// case *chat.ClientMessage_SendMessage:
-			// 	defaultMessage := domain.NewDefaultMessage(msg.SendMessage.GetContent(), username, userID)
-			// 	err := s.Business.SendMessage(ctx, defaultMessage)
-			// 	if err != nil {
-			// 		log.Error("failed send message", "err", err)
-			// 		return status.Error(codes.Internal, err.Error())
-			// 	}
-
-			// default:
-			// 	return status.Error(codes.InvalidArgument, ErrUnknownMessageType.Error())
-			// }
 		}
 	}
 }
