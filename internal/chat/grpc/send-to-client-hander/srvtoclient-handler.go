@@ -6,7 +6,7 @@ import (
 	"runtime/debug"
 	"time"
 
-	"github.com/Krokozabra213/protos/gen/go/proto/chat"
+	"github.com/Krokozabra213/protos/gen/go/chat"
 	"github.com/Krokozabra213/sso/internal/chat/domain"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

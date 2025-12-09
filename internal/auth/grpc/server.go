@@ -3,7 +3,7 @@ package authgrpc
 import (
 	"context"
 
-	"github.com/Krokozabra213/protos/gen/go/proto/sso"
+	"github.com/Krokozabra213/protos/gen/go/sso"
 )
 
 type IBusiness interface {

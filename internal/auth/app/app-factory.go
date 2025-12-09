@@ -1,7 +1,7 @@
 package app
 
 import (
-	"github.com/Krokozabra213/protos/gen/go/proto/sso"
+	"github.com/Krokozabra213/protos/gen/go/sso"
 	appgrpc "github.com/Krokozabra213/sso/internal/auth/app/grpc"
 	authBusiness "github.com/Krokozabra213/sso/internal/auth/business"
 	authgrpc "github.com/Krokozabra213/sso/internal/auth/grpc"

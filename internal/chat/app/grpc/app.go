@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"net"
 
-	"github.com/Krokozabra213/protos/gen/go/proto/chat"
+	"github.com/Krokozabra213/protos/gen/go/chat"
 	"google.golang.org/grpc"
 )
 

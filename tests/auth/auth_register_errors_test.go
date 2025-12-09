@@ -3,7 +3,7 @@ package tests
 import (
 	"testing"
 
-	"github.com/Krokozabra213/protos/gen/go/proto/sso"
+	"github.com/Krokozabra213/protos/gen/go/sso"
 	authBusiness "github.com/Krokozabra213/sso/internal/auth/business"
 	"github.com/Krokozabra213/sso/tests/auth/suite"
 	"github.com/stretchr/testify/assert"

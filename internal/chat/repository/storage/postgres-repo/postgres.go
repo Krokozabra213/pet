@@ -2,6 +2,7 @@ package postgresrepo
 
 import (
 	"context"
+	"log"
 	"time"
 
 	"github.com/Krokozabra213/sso/internal/chat/domain"
@@ -35,7 +36,15 @@ func (p *Postgres) SaveDefaultMessage(
 		return nil, storage.CtxError(ctx.Err())
 	}
 
-	// TODO: ADD SAVE MESSAGE WITH TIMESTAMP RETURN
+	result := p.DB.Client.WithContext(ctx).Create(message)
+	customErr := postgrespet.ErrorWrapper(result.Error)
+	if customErr != nil {
+		err := ErrorFactory(customErr)
+		return message, err
+	}
+
+	// DELETE
+	log.Println(message)
 
 	return message, nil
 }
