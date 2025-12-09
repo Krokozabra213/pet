@@ -19,6 +19,8 @@ var (
 	op                = "ssoconfig: "
 	defaultHost       = "localhost"
 	defaultPort       = "44044"
+	defaultHostHttp   = "localhost"
+	defaultPortHttp   = "8090"
 	defaultCtxTimeout = 5000
 )
 
@@ -75,9 +77,11 @@ func Load(env string, test bool) *Config {
 			Secret:          []byte(getEnvOrFatal(Secret)),
 		},
 		Server: &configs.Server{
-			Host:    getEnvDefault(HOST, defaultHost),
-			Port:    getEnvDefault(PORT, defaultPort),
-			TimeOut: getEnvDefaultInt(ContextTimeout, defaultCtxTimeout),
+			Host:     getEnvDefault(HOST, defaultHost),
+			Port:     getEnvDefault(PORT, defaultPort),
+			HttpHost: getEnvDefault(HOST_HTTP, defaultHostHttp),
+			HttpPort: getEnvDefault(PORT_HTTP, defaultPortHttp),
+			TimeOut:  getEnvDefaultInt(ContextTimeout, defaultCtxTimeout),
 		},
 		DB: &configs.DB{
 			DSN: getEnvOrFatal(DSN),

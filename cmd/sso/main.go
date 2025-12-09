@@ -9,6 +9,7 @@ import (
 
 	"github.com/Krokozabra213/sso/configs/ssoconfig"
 	"github.com/Krokozabra213/sso/internal/auth/app"
+	apphttp "github.com/Krokozabra213/sso/internal/auth/app/http"
 	"github.com/Krokozabra213/sso/pkg/logger"
 )
 
@@ -33,14 +34,19 @@ func main() {
 
 	builder := app.NewAppBuilder(cfg, log)
 	appFactory := app.NewAppFactory(builder)
-	application := appFactory.Create()
-	go application.MustRun()
+	grpcApplication := appFactory.Create()
+	go grpcApplication.MustRun()
+
+	httpapp := apphttp.New(log, cfg.Server.HttpHost, cfg.Server.HttpPort, cfg.Server.Host, cfg.Server.Port)
+	// go httpapp.MustRun()
+	go httpapp.RunHTTP()
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
 	sign := <-stop
 	log.Info("stopping application", slog.String("signal", sign.String()))
 
-	application.Stop()
+	httpapp.Stop()
+	grpcApplication.Stop()
 	log.Info("application stopped")
 }

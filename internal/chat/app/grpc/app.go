@@ -7,6 +7,7 @@ import (
 
 	"github.com/Krokozabra213/protos/gen/go/chat"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 const (
@@ -29,6 +30,8 @@ func New(log *slog.Logger, host string, port string, srv chat.ChatServer) *App {
 	)
 
 	chat.RegisterChatServer(gRPCServer, srv)
+
+	reflection.Register(gRPCServer)
 
 	return &App{
 		log:        log,

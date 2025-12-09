@@ -7,23 +7,26 @@ import (
 
 	"github.com/Krokozabra213/protos/gen/go/sso"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
-type App struct {
+type GRPCApp struct {
 	log        *slog.Logger
 	gRPCServer *grpc.Server
 	host       string
 	port       string
 }
 
-func New(log *slog.Logger, host string, port string, srv sso.AuthServer) *App {
+func New(log *slog.Logger, host string, port string, srv sso.AuthServer) *GRPCApp {
 	gRPCServer := grpc.NewServer(
 		grpc.UnaryInterceptor(ValidationUnaryInterceptor),
 	)
 
 	sso.RegisterAuthServer(gRPCServer, srv)
 
-	return &App{
+	reflection.Register(gRPCServer)
+
+	return &GRPCApp{
 		log:        log,
 		gRPCServer: gRPCServer,
 		host:       host,
@@ -31,8 +34,8 @@ func New(log *slog.Logger, host string, port string, srv sso.AuthServer) *App {
 	}
 }
 
-func (a *App) Run() error {
-	const op = "appgrpc.Run"
+func (a *GRPCApp) RunGRPC() error {
+	const op = "authappgrpc.Run"
 
 	log := a.log.With(
 		slog.String("op", op),
@@ -54,14 +57,14 @@ func (a *App) Run() error {
 	return nil
 }
 
-func (a *App) MustRun() {
-	if err := a.Run(); err != nil {
+func (a *GRPCApp) MustRun() {
+	if err := a.RunGRPC(); err != nil {
 		panic(err)
 	}
 }
 
-func (a *App) Stop() {
-	const op = "grpcapp.Stop"
+func (a *GRPCApp) Stop() {
+	const op = "authgrpcapp.Stop"
 
 	a.log.With(slog.String("op", op)).
 		Info("stopping gRPC server", slog.String("address", a.host+a.port))

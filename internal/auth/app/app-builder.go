@@ -73,6 +73,6 @@ func (builder *AuthAppBuilder) Handler(business authgrpc.IBusiness) sso.AuthServ
 	return authgrpc.New(business)
 }
 
-func (builder *AuthAppBuilder) BuildGRPCApp(handler sso.AuthServer) *appgrpc.App {
+func (builder *AuthAppBuilder) BuildGRPCApp(handler sso.AuthServer) *appgrpc.GRPCApp {
 	return appgrpc.New(builder.log, builder.cfg.Server.Host, builder.cfg.Server.Port, handler)
 }

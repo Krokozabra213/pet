@@ -4,6 +4,8 @@ var (
 	DSN                 = "SSO_DSN"
 	HOST                = "SSO_AUTH_HOST"
 	PORT                = "SSO_AUTH_PORT"
+	HOST_HTTP           = "SSO_AUTH_HOST_HTTP"
+	PORT_HTTP           = "SSO_AUTH_PORT_HTTP"
 	PrivateKey          = "SSO_RSA_PRIVATE_KEY_PATH"
 	Secret              = "SSO_APP_SECRET"
 	DevAccessTokenTTL   = "SSO_DEV_ACCESS_TOKEN_TTL"

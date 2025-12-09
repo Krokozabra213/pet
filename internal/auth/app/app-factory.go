@@ -34,7 +34,7 @@ type IAppBuilder interface {
 	Handler(business authgrpc.IBusiness) sso.AuthServer
 
 	// Application
-	BuildGRPCApp(handler sso.AuthServer) *appgrpc.App
+	BuildGRPCApp(handler sso.AuthServer) *appgrpc.GRPCApp
 }
 
 type AppFactory struct {
@@ -47,7 +47,7 @@ func NewAppFactory(builder IAppBuilder) *AppFactory {
 	}
 }
 
-func (fack *AppFactory) Create() *appgrpc.App {
+func (fack *AppFactory) Create() *appgrpc.GRPCApp {
 	// Connects
 	dbConn := fack.builder.DBConn()
 	redisConn := fack.builder.NoSQLDBConn()
