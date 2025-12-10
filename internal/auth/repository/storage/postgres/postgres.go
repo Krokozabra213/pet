@@ -26,7 +26,7 @@ func New(db *postgrespet.PGDB) *Postgres {
 
 func (p *Postgres) SaveUser(
 	parentCtx context.Context, user *domain.User,
-) (uid uint, err error) {
+) (uid uint64, err error) {
 
 	ctx, cancel := contexthandler.EnsureCtxTimeout(parentCtx, ctxTimeout)
 	defer cancel()

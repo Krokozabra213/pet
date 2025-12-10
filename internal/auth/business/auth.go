@@ -22,7 +22,7 @@ type ITokenProvider interface {
 }
 
 type IUserProvider interface {
-	SaveUser(ctx context.Context, user *domain.User) (uid uint, err error)
+	SaveUser(ctx context.Context, user *domain.User) (uid uint64, err error)
 	User(ctx context.Context, username string) (*domain.User, error)
 	UserByID(ctx context.Context, userID int64) (*domain.User, error)
 	IsAdmin(ctx context.Context, userID int64) (bool, error)
@@ -65,9 +65,12 @@ func New(
 //-------------------------REGISTER-LOGIC-------------------------------------------------//
 
 func (a *Auth) RegisterNewUser(
-	ctx context.Context, username, password string,
-) (uint, error) {
+	ctx context.Context, input *domain.RegisterInput,
+) (*domain.RegisterOutput, error) {
 	const op = "auth.RegisterNewUser"
+
+	username := input.GetUsername()
+	password := input.GetPassword()
 
 	log := a.log.With(
 		slog.String("op", op),
@@ -78,7 +81,7 @@ func (a *Auth) RegisterNewUser(
 	passHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		log.Error("failed password hashing", slog.String("error", err.Error()))
-		return 0, BusinessError(domain.UserEntity, ErrHashPassword)
+		return nil, BusinessError(domain.UserEntity, ErrHashPassword)
 	}
 
 	user := domain.NewUser(username, string(passHash))
@@ -86,26 +89,31 @@ func (a *Auth) RegisterNewUser(
 	if err != nil {
 		log.Error("failed save new user", slog.String("error", err.Error()))
 		if errors.Is(err, storage.ErrCtxCancelled) || errors.Is(err, storage.ErrCtxDeadline) {
-			return 0, BusinessError(domain.UserEntity, ErrTimeout)
+			return nil, BusinessError(domain.UserEntity, ErrTimeout)
 		}
 		if errors.Is(err, storage.ErrDuplicate) {
-			return 0, BusinessError(domain.UserEntity, ErrExists)
+			return nil, BusinessError(domain.UserEntity, ErrExists)
 		}
-		return 0, BusinessError(domain.UserEntity, ErrInternal)
+		return nil, BusinessError(domain.UserEntity, ErrInternal)
 	}
 
 	log.Info("user successfully registered",
 		slog.Uint64("user_id", uint64(userID)))
 
-	return userID, nil
+	uotput := domain.NewRegisterOutput(userID)
+	return uotput, nil
 }
 
 //-------------------------LOGIN-LOGIC-------------------------------------------------//
 
 func (a *Auth) Login(
-	ctx context.Context, username, password string, appID int,
-) (string, string, error) {
+	ctx context.Context, input *domain.LoginInput,
+) (*domain.LoginOutput, error) {
 	const op = "auth.Login"
+
+	username := input.GetUsername()
+	password := input.GetPassword()
+	appID := input.GetAppID()
 
 	log := a.log.With(
 		slog.String("op", op),
@@ -118,30 +126,30 @@ func (a *Auth) Login(
 	if err != nil {
 		log.Error("failed get app by id", slog.String("error", err.Error()))
 		if errors.Is(err, storage.ErrCtxCancelled) || errors.Is(err, storage.ErrCtxDeadline) {
-			return "", "", BusinessError(domain.AppEntity, ErrTimeout)
+			return nil, BusinessError(domain.AppEntity, ErrTimeout)
 		}
 		if errors.Is(err, storage.ErrNotFound) {
-			return "", "", BusinessError(domain.AppEntity, ErrNotFound)
+			return nil, BusinessError(domain.AppEntity, ErrNotFound)
 		}
-		return "", "", BusinessError(domain.AppEntity, ErrInternal)
+		return nil, BusinessError(domain.AppEntity, ErrInternal)
 	}
 
 	user, err := a.userProvider.User(ctx, username)
 	if err != nil {
 		log.Error("failed get user", slog.String("error", err.Error()))
 		if errors.Is(err, storage.ErrCtxCancelled) || errors.Is(err, storage.ErrCtxDeadline) {
-			return "", "", BusinessError(domain.UserEntity, ErrTimeout)
+			return nil, BusinessError(domain.UserEntity, ErrTimeout)
 		}
 		if errors.Is(err, storage.ErrNotFound) {
-			return "", "", BusinessError(domain.UserEntity, ErrNotFound)
+			return nil, BusinessError(domain.UserEntity, ErrNotFound)
 		}
-		return "", "", BusinessError(domain.UserEntity, ErrInternal)
+		return nil, BusinessError(domain.UserEntity, ErrInternal)
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
 		log.Error("failed compare passwords", slog.String("error", err.Error()))
-		return "", "", BusinessError(domain.UserEntity, ErrInvalidCredentials)
+		return nil, BusinessError(domain.UserEntity, ErrInvalidCredentials)
 	}
 
 	tokenGen := jwt.New(
@@ -152,19 +160,22 @@ func (a *Auth) Login(
 	tokenPair, err := tokenGen.GenerateTokenPair()
 	if err != nil {
 		log.Error("failed generate token", slog.String("error", err.Error()))
-		return "", "", BusinessError(domain.TokenEntity, ErrTokenGenerate)
+		return nil, BusinessError(domain.TokenEntity, ErrTokenGenerate)
 	}
 
 	log.Info("user successfully logining")
-	return tokenPair.AccessToken, tokenPair.RefreshToken, nil
+	uotput := domain.NewLoginOutput(tokenPair.AccessToken, tokenPair.RefreshToken)
+	return uotput, nil
 }
 
 //-------------------------LOGOUT-LOGIC-------------------------------------------------//
 
 func (a *Auth) Logout(
-	ctx context.Context, refreshToken string,
-) (bool, error) {
+	ctx context.Context, input *domain.LogoutInput,
+) (*domain.LogoutOutput, error) {
 	const op = "auth.Logout"
+
+	refreshToken := input.GetRefreshToken()
 
 	log := a.log.With(
 		slog.String("op", op),
@@ -175,7 +186,7 @@ func (a *Auth) Logout(
 	claims, err := jwt.ParseRefresh(refreshToken, a.keyManager)
 	if err != nil {
 		log.Error("failed parsing token", slog.String("error", err.Error()))
-		return false, BusinessError(domain.TokenEntity, ErrParse)
+		return nil, BusinessError(domain.TokenEntity, ErrParse)
 	}
 
 	hashToken := hmac.HashJWTTokenHMAC(refreshToken, a.cfg.Security.Secret)
@@ -184,22 +195,26 @@ func (a *Auth) Logout(
 	if err != nil {
 		log.Error("failed revoking token", slog.String("error", err.Error()))
 		if errors.Is(err, storage.ErrCtxCancelled) || errors.Is(err, storage.ErrCtxDeadline) {
-			return false, BusinessError(domain.TokenEntity, ErrTimeout)
+			return nil, BusinessError(domain.TokenEntity, ErrTimeout)
 		}
 		if errors.Is(err, storage.ErrTokenExpired) {
-			return false, BusinessError(domain.TokenEntity, ErrTokenExpired)
+			return nil, BusinessError(domain.TokenEntity, ErrTokenExpired)
 		}
-		return false, BusinessError(domain.TokenEntity, ErrInternal)
+		return nil, BusinessError(domain.TokenEntity, ErrInternal)
 	}
 	log.Info("user successfully logouting")
-
-	return true, nil
+	uotput := domain.NewLogoutOutput(true)
+	return uotput, nil
 }
 
 //-------------------------ISADMIN-LOGIC-------------------------------------------------//
 
-func (a *Auth) IsAdmin(ctx context.Context, userID int64) (bool, error) {
+func (a *Auth) IsAdmin(
+	ctx context.Context, input *domain.IsAdminInput,
+) (*domain.IsAdminOutput, error) {
 	const op = "auth.IsAdmin"
+
+	userID := input.GetUserID()
 
 	log := a.log.With(
 		slog.String("op", op),
@@ -211,37 +226,41 @@ func (a *Auth) IsAdmin(ctx context.Context, userID int64) (bool, error) {
 	if err != nil {
 		log.Error("failed to get user by id", slog.String("error", err.Error()))
 		if errors.Is(err, storage.ErrCtxCancelled) || errors.Is(err, storage.ErrCtxDeadline) {
-			return false, BusinessError(domain.UserEntity, ErrTimeout)
+			return nil, BusinessError(domain.UserEntity, ErrTimeout)
 		}
 		if errors.Is(err, storage.ErrNotFound) {
-			return false, BusinessError(domain.UserEntity, ErrNotFound)
+			return nil, BusinessError(domain.UserEntity, ErrNotFound)
 		}
-		return false, BusinessError(domain.UserEntity, ErrInternal)
+		return nil, BusinessError(domain.UserEntity, ErrInternal)
 	}
 
 	isAdmin, err := a.userProvider.IsAdmin(ctx, userID)
 	if err != nil {
 		log.Error("failed checking isadmin user", slog.String("error", err.Error()))
 		if errors.Is(err, storage.ErrCtxCancelled) || errors.Is(err, storage.ErrCtxDeadline) {
-			return false, BusinessError(domain.AdminEntity, ErrTimeout)
+			return nil, BusinessError(domain.AdminEntity, ErrTimeout)
 		}
-		return false, BusinessError(domain.AdminEntity, ErrInternal)
+		return nil, BusinessError(domain.AdminEntity, ErrInternal)
 	}
 
 	if !isAdmin {
 		log.Info("err permission")
-		return false, BusinessError(domain.AdminEntity, ErrPermission)
+		return nil, BusinessError(domain.AdminEntity, ErrPermission)
 	}
 
 	log.Info("ending isadmin process")
-
-	return isAdmin, nil
+	uotput := domain.NewIsAdminOutput(isAdmin)
+	return uotput, nil
 }
 
 //-------------------------PUBLICKEY-LOGIC-------------------------------------------------//
 
-func (a *Auth) PublicKey(ctx context.Context, appID int) (string, error) {
+func (a *Auth) PublicKey(
+	ctx context.Context, input *domain.PublicKeyInput,
+) (*domain.PublicKeyOutput, error) {
 	const op = "auth.PublicKey"
+
+	appID := input.GetAppID()
 
 	log := a.log.With(
 		slog.String("op", op),
@@ -253,23 +272,28 @@ func (a *Auth) PublicKey(ctx context.Context, appID int) (string, error) {
 	if err != nil {
 		log.Error("failed get app by id", slog.String("error", err.Error()))
 		if errors.Is(err, storage.ErrCtxCancelled) || errors.Is(err, storage.ErrCtxDeadline) {
-			return "", BusinessError(domain.AppEntity, ErrTimeout)
+			return nil, BusinessError(domain.AppEntity, ErrTimeout)
 		}
 		if errors.Is(err, storage.ErrNotFound) {
-			return "", BusinessError(domain.AppEntity, ErrNotFound)
+			return nil, BusinessError(domain.AppEntity, ErrNotFound)
 		}
-		return "", BusinessError(domain.AppEntity, ErrInternal)
+		return nil, BusinessError(domain.AppEntity, ErrInternal)
 	}
 
 	log.Info("ending publickey process")
-
-	return a.keyManager.GetPublicKeyPEM()
+	publicKey, err := a.keyManager.GetPublicKeyPEM()
+	uotput := domain.NewPublicKeyOutput(publicKey)
+	return uotput, err
 }
 
 //-------------------------REFRESH-LOGIC-------------------------------------------------//
 
-func (a *Auth) Refresh(ctx context.Context, refreshToken string) (string, string, error) {
+func (a *Auth) Refresh(
+	ctx context.Context, input *domain.RefreshInput,
+) (*domain.RefreshOutput, error) {
 	const op = "auth.Refresh"
+
+	refreshToken := input.GetRefreshToken()
 
 	log := a.log.With(
 		slog.String("op", op),
@@ -284,19 +308,19 @@ func (a *Auth) Refresh(ctx context.Context, refreshToken string) (string, string
 	if err != nil {
 		log.Error("failed to check token", slog.String("error", err.Error()))
 		if errors.Is(err, storage.ErrCtxCancelled) || errors.Is(err, storage.ErrCtxDeadline) {
-			return "", "", BusinessError(domain.TokenEntity, ErrTimeout)
+			return nil, BusinessError(domain.TokenEntity, ErrTimeout)
 		}
-		return "", "", BusinessError(domain.TokenEntity, ErrInternal)
+		return nil, BusinessError(domain.TokenEntity, ErrInternal)
 	}
 	if exist {
-		return "", "", BusinessError(domain.TokenEntity, ErrTokenRevoked)
+		return nil, BusinessError(domain.TokenEntity, ErrTokenRevoked)
 	}
 
 	// достаём claims из refresh токена
 	claims, err := jwt.ParseRefresh(refreshToken, a.keyManager)
 	if err != nil {
 		log.Error("failed to parse token", slog.String("error", err.Error()))
-		return "", "", BusinessError(domain.TokenEntity, ErrParse)
+		return nil, BusinessError(domain.TokenEntity, ErrParse)
 	}
 
 	// проверяем наличие пользователя с таким id
@@ -304,12 +328,12 @@ func (a *Auth) Refresh(ctx context.Context, refreshToken string) (string, string
 	if err != nil {
 		log.Error("failed to get user by id", slog.String("error", err.Error()))
 		if errors.Is(err, storage.ErrCtxCancelled) || errors.Is(err, storage.ErrCtxDeadline) {
-			return "", "", BusinessError(domain.UserEntity, ErrTimeout)
+			return nil, BusinessError(domain.UserEntity, ErrTimeout)
 		}
 		if errors.Is(err, storage.ErrNotFound) {
-			return "", "", BusinessError(domain.UserEntity, ErrNotFound)
+			return nil, BusinessError(domain.UserEntity, ErrNotFound)
 		}
-		return "", "", BusinessError(domain.UserEntity, ErrInternal)
+		return nil, BusinessError(domain.UserEntity, ErrInternal)
 	}
 
 	// проверяем наличие приложения с таким id
@@ -317,12 +341,12 @@ func (a *Auth) Refresh(ctx context.Context, refreshToken string) (string, string
 	if err != nil {
 		log.Error("failed to get app by id", slog.String("error", err.Error()))
 		if errors.Is(err, storage.ErrCtxCancelled) || errors.Is(err, storage.ErrCtxDeadline) {
-			return "", "", BusinessError(domain.AppEntity, ErrTimeout)
+			return nil, BusinessError(domain.AppEntity, ErrTimeout)
 		}
 		if errors.Is(err, storage.ErrNotFound) {
-			return "", "", BusinessError(domain.AppEntity, ErrNotFound)
+			return nil, BusinessError(domain.AppEntity, ErrNotFound)
 		}
-		return "", "", BusinessError(domain.AppEntity, ErrInternal)
+		return nil, BusinessError(domain.AppEntity, ErrInternal)
 	}
 
 	// генерируем новую пару токенов
@@ -334,21 +358,21 @@ func (a *Auth) Refresh(ctx context.Context, refreshToken string) (string, string
 	tokenPair, err := tokenGen.GenerateTokenPair()
 	if err != nil {
 		log.Error("failed to generate token", "err", err.Error())
-		return "", "", BusinessError(domain.TokenEntity, ErrTokenGenerate)
+		return nil, BusinessError(domain.TokenEntity, ErrTokenGenerate)
 	}
 
 	err = a.tokenRepo.SaveToken(ctx, hashToken, claims.Exp)
 	if err != nil {
 		log.Error("failed to save revoking token", "err", err.Error())
 		if errors.Is(err, storage.ErrCtxCancelled) || errors.Is(err, storage.ErrCtxDeadline) {
-			return "", "", BusinessError(domain.TokenEntity, ErrTimeout)
+			return nil, BusinessError(domain.TokenEntity, ErrTimeout)
 		}
 		if errors.Is(err, storage.ErrTokenExpired) {
-			return "", "", BusinessError(domain.TokenEntity, ErrTokenExpired)
+			return nil, BusinessError(domain.TokenEntity, ErrTokenExpired)
 		}
-		return "", "", BusinessError(domain.TokenEntity, ErrInternal)
+		return nil, BusinessError(domain.TokenEntity, ErrInternal)
 	}
 	log.Info("user refreshed token", "tokens", tokenPair.AccessToken+", "+tokenPair.RefreshToken)
-
-	return tokenPair.AccessToken, tokenPair.RefreshToken, nil
+	uotput := domain.NewRefreshOutput(tokenPair.AccessToken, tokenPair.RefreshToken)
+	return uotput, nil
 }

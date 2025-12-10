@@ -19,7 +19,9 @@ type GRPCApp struct {
 
 func New(log *slog.Logger, host string, port string, srv sso.AuthServer) *GRPCApp {
 	gRPCServer := grpc.NewServer(
-		grpc.UnaryInterceptor(ValidationUnaryInterceptor),
+		grpc.ChainUnaryInterceptor(
+			grpc.UnaryServerInterceptor(ValidationUnaryInterceptor),
+		),
 	)
 
 	sso.RegisterAuthServer(gRPCServer, srv)
