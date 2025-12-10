@@ -11,9 +11,11 @@ type DB struct {
 }
 
 type Server struct {
-	Host    string
-	Port    string
-	TimeOut int
+	Host     string
+	Port     string
+	TimeOut  int
+	HttpHost string
+	HttpPort string
 }
 
 type RedisDB struct {
