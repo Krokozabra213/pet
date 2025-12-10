@@ -8,18 +8,6 @@ import (
 )
 
 type IBusiness interface {
-	// Login(ctx context.Context, username, password string, appID int) (
-	// 	accessToken string, refreshToken string, err error,
-	// )
-	// RegisterNewUser(ctx context.Context, username, password string) (
-	// 	userID uint, err error,
-	// )
-	// PublicKey(ctx context.Context, appID int) (string, error)
-	// IsAdmin(ctx context.Context, userID int64) (bool, error)
-	// Logout(ctx context.Context, refreshToken string) (bool, error)
-	// Refresh(ctx context.Context, token string) (
-	// 	accessToken string, refreshToken string, err error,
-	// )
 	Login(ctx context.Context, input *domain.LoginInput) (
 		*domain.LoginOutput, error,
 	)
