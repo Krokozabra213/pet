@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"net"
 
-	"github.com/Krokozabra213/protos/gen/go/proto/sso"
+	"github.com/Krokozabra213/protos/gen/go/sso"
 	"google.golang.org/grpc"
 )
 

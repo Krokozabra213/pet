@@ -3,7 +3,7 @@ package app
 import (
 	"log/slog"
 
-	"github.com/Krokozabra213/protos/gen/go/proto/chat"
+	"github.com/Krokozabra213/protos/gen/go/chat"
 	"github.com/Krokozabra213/sso/configs/chatconfig"
 	appgrpc "github.com/Krokozabra213/sso/internal/chat/app/grpc"
 	chatBusiness "github.com/Krokozabra213/sso/internal/chat/business"
@@ -38,9 +38,7 @@ func (builder *ChatAppBuilder) BrokerConn() *custombroker.CBroker {
 }
 
 func (builder *ChatAppBuilder) PGConn() *postgrespet.PGDB {
-	// TODO: раскомментировать
-	// return postgrespet.NewPGDB(builder.cfg.DB.DSN)
-	return nil
+	return postgrespet.NewPGDB(builder.cfg.DB.DSN)
 }
 
 // repositories

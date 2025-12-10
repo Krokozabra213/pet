@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/Krokozabra213/protos/gen/go/proto/chat"
+	"github.com/Krokozabra213/protos/gen/go/chat"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

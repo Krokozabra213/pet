@@ -4,7 +4,7 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/Krokozabra213/protos/gen/go/proto/chat"
+	"github.com/Krokozabra213/protos/gen/go/chat"
 	"github.com/Krokozabra213/sso/internal/chat/domain"
 	recvprocessor "github.com/Krokozabra213/sso/internal/chat/grpc/recv-processor"
 	handlersfactory "github.com/Krokozabra213/sso/internal/chat/grpc/recv-processor/handlers-factory"

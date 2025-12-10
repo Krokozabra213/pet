@@ -1,7 +1,7 @@
 package app
 
 import (
-	"github.com/Krokozabra213/protos/gen/go/proto/chat"
+	"github.com/Krokozabra213/protos/gen/go/chat"
 	appgrpc "github.com/Krokozabra213/sso/internal/chat/app/grpc"
 	chatBusiness "github.com/Krokozabra213/sso/internal/chat/business"
 	chatgrpc "github.com/Krokozabra213/sso/internal/chat/grpc"

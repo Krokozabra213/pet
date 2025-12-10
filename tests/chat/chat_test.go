@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Krokozabra213/protos/gen/go/proto/chat"
+	"github.com/Krokozabra213/protos/gen/go/chat"
 	"github.com/Krokozabra213/sso/tests/chat/suite"
 )
 

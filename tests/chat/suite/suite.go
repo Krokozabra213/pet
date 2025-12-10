@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/Krokozabra213/protos/gen/go/proto/chat"
+	"github.com/Krokozabra213/protos/gen/go/chat"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
