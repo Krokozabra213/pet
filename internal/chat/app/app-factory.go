@@ -3,7 +3,7 @@ package app
 import (
 	"github.com/Krokozabra213/protos/gen/go/chat"
 	appgrpc "github.com/Krokozabra213/sso/internal/chat/app/grpc"
-	chatBusiness "github.com/Krokozabra213/sso/internal/chat/business"
+	chatusecases "github.com/Krokozabra213/sso/internal/chat/business/usecases"
 	chatgrpc "github.com/Krokozabra213/sso/internal/chat/grpc"
 	custombroker "github.com/Krokozabra213/sso/pkg/custom-broker"
 	postgrespet "github.com/Krokozabra213/sso/pkg/db/postgres-pet"
@@ -16,15 +16,15 @@ type IAppBuilder interface {
 	PGConn() *postgrespet.PGDB
 
 	// Repository providers
-	ClientProvider(brokerConn *custombroker.CBroker) chatBusiness.IClientRepo
-	MessageProvider(brokerConn *custombroker.CBroker) chatBusiness.IMessageRepo
-	DefaultMessageSaver(dbconn *postgrespet.PGDB) chatBusiness.IDefaultMessageSaver
+	ClientProvider(brokerConn *custombroker.CBroker) chatusecases.IClientRepo
+	MessageProvider(brokerConn *custombroker.CBroker) chatusecases.IMessageRepo
+	DefaultMessageSaver(dbconn *postgrespet.PGDB) chatusecases.IDefaultMessageSaver
 
 	// Business logic layer
 	Business(
-		clientProvider chatBusiness.IClientRepo,
-		messageProvider chatBusiness.IMessageRepo,
-		defaultMessageSaver chatBusiness.IDefaultMessageSaver,
+		clientProvider chatusecases.IClientRepo,
+		messageProvider chatusecases.IMessageRepo,
+		defaultMessageSaver chatusecases.IDefaultMessageSaver,
 	) chatgrpc.IBusiness
 
 	// gRPC handler

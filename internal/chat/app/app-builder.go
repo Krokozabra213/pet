@@ -6,7 +6,7 @@ import (
 	"github.com/Krokozabra213/protos/gen/go/chat"
 	"github.com/Krokozabra213/sso/configs/chatconfig"
 	appgrpc "github.com/Krokozabra213/sso/internal/chat/app/grpc"
-	chatBusiness "github.com/Krokozabra213/sso/internal/chat/business"
+	chatusecases "github.com/Krokozabra213/sso/internal/chat/business/usecases"
 	chatgrpc "github.com/Krokozabra213/sso/internal/chat/grpc"
 	"github.com/Krokozabra213/sso/internal/chat/repository/broker"
 	postgresrepo "github.com/Krokozabra213/sso/internal/chat/repository/storage/postgres-repo"
@@ -43,25 +43,25 @@ func (builder *ChatAppBuilder) PGConn() *postgrespet.PGDB {
 
 // repositories
 // TODO:
-func (builder *ChatAppBuilder) ClientProvider(brokerConn *custombroker.CBroker) chatBusiness.IClientRepo {
+func (builder *ChatAppBuilder) ClientProvider(brokerConn *custombroker.CBroker) chatusecases.IClientRepo {
 	return broker.New(brokerConn)
 }
 
-func (builder *ChatAppBuilder) MessageProvider(brokerConn *custombroker.CBroker) chatBusiness.IMessageRepo {
+func (builder *ChatAppBuilder) MessageProvider(brokerConn *custombroker.CBroker) chatusecases.IMessageRepo {
 	return broker.New(brokerConn)
 }
 
-func (builder *ChatAppBuilder) DefaultMessageSaver(dbconn *postgrespet.PGDB) chatBusiness.IDefaultMessageSaver {
+func (builder *ChatAppBuilder) DefaultMessageSaver(dbconn *postgrespet.PGDB) chatusecases.IDefaultMessageSaver {
 	return postgresrepo.New(dbconn)
 }
 
 // business-logic
 func (builder *ChatAppBuilder) Business(
-	clientProvider chatBusiness.IClientRepo,
-	messageProvider chatBusiness.IMessageRepo,
-	defaultMessageSaver chatBusiness.IDefaultMessageSaver,
+	clientProvider chatusecases.IClientRepo,
+	messageProvider chatusecases.IMessageRepo,
+	defaultMessageSaver chatusecases.IDefaultMessageSaver,
 ) chatgrpc.IBusiness {
-	return chatBusiness.New(
+	return chatusecases.New(
 		builder.log, builder.cfg,
 		clientProvider, messageProvider,
 		defaultMessageSaver,
