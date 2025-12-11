@@ -7,12 +7,14 @@ import (
 
 	authBusiness "github.com/Krokozabra213/sso/internal/auth/business"
 	"github.com/Krokozabra213/sso/internal/auth/domain"
+	businessinput "github.com/Krokozabra213/sso/internal/auth/domain/business-input"
+	businessoutput "github.com/Krokozabra213/sso/internal/auth/domain/business-output"
 	"github.com/Krokozabra213/sso/internal/auth/repository/storage"
 )
 
 func (a *Auth) IsAdmin(
-	ctx context.Context, input *domain.IsAdminInput,
-) (*domain.IsAdminOutput, error) {
+	ctx context.Context, input *businessinput.IsAdminInput,
+) (*businessoutput.IsAdminOutput, error) {
 	const op = "auth.IsAdmin"
 
 	userID := input.GetUserID()
@@ -50,6 +52,6 @@ func (a *Auth) IsAdmin(
 	}
 
 	log.Info("ending isadmin process")
-	uotput := domain.NewIsAdminOutput(isAdmin)
+	uotput := businessoutput.NewIsAdminOutput(isAdmin)
 	return uotput, nil
 }

@@ -4,27 +4,28 @@ import (
 	"context"
 
 	"github.com/Krokozabra213/protos/gen/go/sso"
-	"github.com/Krokozabra213/sso/internal/auth/domain"
+	businessinput "github.com/Krokozabra213/sso/internal/auth/domain/business-input"
+	businessoutput "github.com/Krokozabra213/sso/internal/auth/domain/business-output"
 )
 
 type IBusiness interface {
-	Login(ctx context.Context, input *domain.LoginInput) (
-		*domain.LoginOutput, error,
+	Login(ctx context.Context, input *businessinput.LoginInput) (
+		*businessoutput.LoginOutput, error,
 	)
-	RegisterNewUser(ctx context.Context, input *domain.RegisterInput) (
-		*domain.RegisterOutput, error,
+	RegisterNewUser(ctx context.Context, input *businessinput.RegisterInput) (
+		*businessoutput.RegisterOutput, error,
 	)
-	PublicKey(ctx context.Context, input *domain.PublicKeyInput) (
-		*domain.PublicKeyOutput, error,
+	PublicKey(ctx context.Context, input *businessinput.PublicKeyInput) (
+		*businessoutput.PublicKeyOutput, error,
 	)
-	IsAdmin(ctx context.Context, input *domain.IsAdminInput) (
-		*domain.IsAdminOutput, error,
+	IsAdmin(ctx context.Context, input *businessinput.IsAdminInput) (
+		*businessoutput.IsAdminOutput, error,
 	)
-	Logout(ctx context.Context, input *domain.LogoutInput) (
-		*domain.LogoutOutput, error,
+	Logout(ctx context.Context, input *businessinput.LogoutInput) (
+		*businessoutput.LogoutOutput, error,
 	)
-	Refresh(ctx context.Context, input *domain.RefreshInput) (
-		*domain.RefreshOutput, error,
+	Refresh(ctx context.Context, input *businessinput.RefreshInput) (
+		*businessoutput.RefreshOutput, error,
 	)
 }
 
@@ -45,7 +46,7 @@ func (s *ServerAPI) Register(
 ) (*sso.RegisterResponse, error) {
 	var response *sso.RegisterResponse
 
-	regInput := domain.NewRegisterInput(r.GetUsername(), r.GetPassword())
+	regInput := businessinput.NewRegisterInput(r.GetUsername(), r.GetPassword())
 	regOutput, err := s.Business.RegisterNewUser(ctx, regInput)
 
 	if err == nil {
@@ -62,7 +63,7 @@ func (s *ServerAPI) Login(
 ) (*sso.LoginResponse, error) {
 	var response *sso.LoginResponse
 
-	loginInput := domain.NewLoginInput(r.GetUsername(), r.GetPassword(), int(r.GetAppId()))
+	loginInput := businessinput.NewLoginInput(r.GetUsername(), r.GetPassword(), int(r.GetAppId()))
 	loginOutput, err := s.Business.Login(ctx, loginInput)
 
 	if err == nil {
@@ -80,7 +81,7 @@ func (s *ServerAPI) Logout(
 ) (*sso.LogoutResponse, error) {
 	var response *sso.LogoutResponse
 
-	logoutInput := domain.NewLogoutInput(r.GetRefreshToken())
+	logoutInput := businessinput.NewLogoutInput(r.GetRefreshToken())
 	logoutOutput, err := s.Business.Logout(ctx, logoutInput)
 
 	if err == nil {
@@ -97,7 +98,7 @@ func (s *ServerAPI) Refresh(
 ) (*sso.RefreshResponse, error) {
 	var response *sso.RefreshResponse
 
-	refreshInput := domain.NewRefreshInput(r.GetRefreshToken())
+	refreshInput := businessinput.NewRefreshInput(r.GetRefreshToken())
 	refreshOutput, err := s.Business.Refresh(ctx, refreshInput)
 
 	if err == nil {
@@ -115,7 +116,7 @@ func (s *ServerAPI) IsAdmin(
 ) (*sso.IsAdminResponse, error) {
 	var response *sso.IsAdminResponse
 
-	isAdminInput := domain.NewIsAdminInput(r.GetUserId())
+	isAdminInput := businessinput.NewIsAdminInput(r.GetUserId())
 	isAdminOutput, err := s.Business.IsAdmin(ctx, isAdminInput)
 
 	if err == nil {
@@ -132,7 +133,7 @@ func (s *ServerAPI) GetPublicKey(
 ) (*sso.PublicKeyResponse, error) {
 	var response *sso.PublicKeyResponse
 
-	publicKeyInput := domain.NewPublicKeyInput(int(r.GetAppId()))
+	publicKeyInput := businessinput.NewPublicKeyInput(int(r.GetAppId()))
 	publicKeyOutput, err := s.Business.PublicKey(ctx, publicKeyInput)
 
 	if err == nil {

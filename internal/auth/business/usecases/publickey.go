@@ -7,12 +7,14 @@ import (
 
 	authBusiness "github.com/Krokozabra213/sso/internal/auth/business"
 	"github.com/Krokozabra213/sso/internal/auth/domain"
+	businessinput "github.com/Krokozabra213/sso/internal/auth/domain/business-input"
+	businessoutput "github.com/Krokozabra213/sso/internal/auth/domain/business-output"
 	"github.com/Krokozabra213/sso/internal/auth/repository/storage"
 )
 
 func (a *Auth) PublicKey(
-	ctx context.Context, input *domain.PublicKeyInput,
-) (*domain.PublicKeyOutput, error) {
+	ctx context.Context, input *businessinput.PublicKeyInput,
+) (*businessoutput.PublicKeyOutput, error) {
 	const op = "auth.PublicKey"
 
 	appID := input.GetAppID()
@@ -37,6 +39,6 @@ func (a *Auth) PublicKey(
 
 	log.Info("ending publickey process")
 	publicKey, err := a.keyManager.GetPublicKeyPEM()
-	uotput := domain.NewPublicKeyOutput(publicKey)
+	uotput := businessoutput.NewPublicKeyOutput(publicKey)
 	return uotput, err
 }

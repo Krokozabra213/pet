@@ -8,14 +8,16 @@ import (
 
 	authBusiness "github.com/Krokozabra213/sso/internal/auth/business"
 	"github.com/Krokozabra213/sso/internal/auth/domain"
+	businessinput "github.com/Krokozabra213/sso/internal/auth/domain/business-input"
+	businessoutput "github.com/Krokozabra213/sso/internal/auth/domain/business-output"
 	"github.com/Krokozabra213/sso/internal/auth/lib/hmac"
 	"github.com/Krokozabra213/sso/internal/auth/lib/jwt"
 	"github.com/Krokozabra213/sso/internal/auth/repository/storage"
 )
 
 func (a *Auth) Refresh(
-	ctx context.Context, input *domain.RefreshInput,
-) (*domain.RefreshOutput, error) {
+	ctx context.Context, input *businessinput.RefreshInput,
+) (*businessoutput.RefreshOutput, error) {
 	const op = "auth.Refresh"
 
 	refreshToken := input.GetRefreshToken()
@@ -98,6 +100,6 @@ func (a *Auth) Refresh(
 		return nil, authBusiness.BusinessError(domain.TokenEntity, authBusiness.ErrInternal)
 	}
 	log.Info("user refreshed token", "tokens", tokenPair.AccessToken+", "+tokenPair.RefreshToken)
-	uotput := domain.NewRefreshOutput(tokenPair.AccessToken, tokenPair.RefreshToken)
+	uotput := businessoutput.NewRefreshOutput(tokenPair.AccessToken, tokenPair.RefreshToken)
 	return uotput, nil
 }

@@ -7,14 +7,16 @@ import (
 
 	authBusiness "github.com/Krokozabra213/sso/internal/auth/business"
 	"github.com/Krokozabra213/sso/internal/auth/domain"
+	businessinput "github.com/Krokozabra213/sso/internal/auth/domain/business-input"
+	businessoutput "github.com/Krokozabra213/sso/internal/auth/domain/business-output"
 	"github.com/Krokozabra213/sso/internal/auth/lib/hmac"
 	"github.com/Krokozabra213/sso/internal/auth/lib/jwt"
 	"github.com/Krokozabra213/sso/internal/auth/repository/storage"
 )
 
 func (a *Auth) Logout(
-	ctx context.Context, input *domain.LogoutInput,
-) (*domain.LogoutOutput, error) {
+	ctx context.Context, input *businessinput.LogoutInput,
+) (*businessoutput.LogoutOutput, error) {
 	const op = "auth.Logout"
 
 	refreshToken := input.GetRefreshToken()
@@ -45,6 +47,6 @@ func (a *Auth) Logout(
 		return nil, authBusiness.BusinessError(domain.TokenEntity, authBusiness.ErrInternal)
 	}
 	log.Info("user successfully logouting")
-	uotput := domain.NewLogoutOutput(true)
+	uotput := businessoutput.NewLogoutOutput(true)
 	return uotput, nil
 }

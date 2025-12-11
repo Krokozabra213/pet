@@ -7,13 +7,15 @@ import (
 
 	authBusiness "github.com/Krokozabra213/sso/internal/auth/business"
 	"github.com/Krokozabra213/sso/internal/auth/domain"
+	businessinput "github.com/Krokozabra213/sso/internal/auth/domain/business-input"
+	businessoutput "github.com/Krokozabra213/sso/internal/auth/domain/business-output"
 	"github.com/Krokozabra213/sso/internal/auth/repository/storage"
 	"golang.org/x/crypto/bcrypt"
 )
 
 func (a *Auth) RegisterNewUser(
-	ctx context.Context, input *domain.RegisterInput,
-) (*domain.RegisterOutput, error) {
+	ctx context.Context, input *businessinput.RegisterInput,
+) (*businessoutput.RegisterOutput, error) {
 	const op = "auth.RegisterNewUser"
 
 	username := input.GetUsername()
@@ -47,6 +49,6 @@ func (a *Auth) RegisterNewUser(
 	log.Info("user successfully registered",
 		slog.Uint64("user_id", uint64(userID)))
 
-	uotput := domain.NewRegisterOutput(userID)
+	uotput := businessoutput.NewRegisterOutput(userID)
 	return uotput, nil
 }

@@ -8,14 +8,16 @@ import (
 
 	authBusiness "github.com/Krokozabra213/sso/internal/auth/business"
 	"github.com/Krokozabra213/sso/internal/auth/domain"
+	businessinput "github.com/Krokozabra213/sso/internal/auth/domain/business-input"
+	businessoutput "github.com/Krokozabra213/sso/internal/auth/domain/business-output"
 	"github.com/Krokozabra213/sso/internal/auth/lib/jwt"
 	"github.com/Krokozabra213/sso/internal/auth/repository/storage"
 	"golang.org/x/crypto/bcrypt"
 )
 
 func (a *Auth) Login(
-	ctx context.Context, input *domain.LoginInput,
-) (*domain.LoginOutput, error) {
+	ctx context.Context, input *businessinput.LoginInput,
+) (*businessoutput.LoginOutput, error) {
 	const op = "auth.Login"
 
 	username := input.GetUsername()
@@ -71,6 +73,6 @@ func (a *Auth) Login(
 	}
 
 	log.Info("user successfully logining")
-	uotput := domain.NewLoginOutput(tokenPair.AccessToken, tokenPair.RefreshToken)
+	uotput := businessoutput.NewLoginOutput(tokenPair.AccessToken, tokenPair.RefreshToken)
 	return uotput, nil
 }
