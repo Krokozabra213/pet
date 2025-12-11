@@ -2,27 +2,12 @@ package postgres
 
 import (
 	"context"
-	"time"
 
 	"github.com/Krokozabra213/sso/internal/auth/domain"
 	"github.com/Krokozabra213/sso/internal/auth/repository/storage"
 	contexthandler "github.com/Krokozabra213/sso/pkg/context-handler"
 	postgrespet "github.com/Krokozabra213/sso/pkg/db/postgres-pet"
 )
-
-const (
-	ctxTimeout = 5 * time.Second
-)
-
-type Postgres struct {
-	DB *postgrespet.PGDB
-}
-
-func New(db *postgrespet.PGDB) *Postgres {
-	return &Postgres{
-		DB: db,
-	}
-}
 
 func (p *Postgres) SaveUser(
 	parentCtx context.Context, user *domain.User,
@@ -113,47 +98,4 @@ func (p *Postgres) IsAdmin(
 		return false, err
 	}
 	return exists, nil
-}
-
-func (p *Postgres) AppByID(
-	parentCtx context.Context, appID int,
-) (*domain.App, error) {
-
-	ctx, cancel := contexthandler.EnsureCtxTimeout(parentCtx, ctxTimeout)
-	defer cancel()
-
-	if ctx.Err() != nil {
-		return nil, storage.CtxError(ctx.Err())
-	}
-
-	var app domain.App
-	result := p.DB.Client.WithContext(ctx).First(&app, "id = ?", appID)
-
-	customErr := postgrespet.ErrorWrapper(result.Error)
-	if customErr != nil {
-		err := ErrorFactory(domain.AppEntity, customErr)
-		return nil, err
-	}
-	return &app, nil
-}
-
-func (p *Postgres) SaveToken(
-	parentCtx context.Context, token *domain.BlackToken,
-) (err error) {
-
-	ctx, cancel := contexthandler.EnsureCtxTimeout(parentCtx, ctxTimeout)
-	defer cancel()
-
-	if ctx.Err() != nil {
-		return storage.CtxError(ctx.Err())
-	}
-
-	result := p.DB.Client.WithContext(ctx).Create(token)
-
-	customErr := postgrespet.ErrorWrapper(result.Error)
-	if customErr != nil {
-		err := ErrorFactory(domain.TokenEntity, customErr)
-		return err
-	}
-	return nil
 }
