@@ -2,32 +2,18 @@ package postgresrepo
 
 import (
 	"context"
-	"log"
-	"time"
 
-	"github.com/Krokozabra213/sso/internal/chat/domain"
+	chatdomain "github.com/Krokozabra213/sso/internal/chat/domain"
 	"github.com/Krokozabra213/sso/internal/chat/repository/storage"
 	contexthandler "github.com/Krokozabra213/sso/pkg/context-handler"
 	postgrespet "github.com/Krokozabra213/sso/pkg/db/postgres-pet"
 )
 
-const (
-	ctxTimeout = 3 * time.Second
-)
+func (p *Postgres) SaveTextMessage(
+	parentCtx context.Context, textMessage *chatdomain.TextMessage,
+) (*chatdomain.TextMessage, error) {
 
-type Postgres struct {
-	DB *postgrespet.PGDB
-}
-
-func New(db *postgrespet.PGDB) *Postgres {
-	return &Postgres{
-		DB: db,
-	}
-}
-
-func (p *Postgres) SaveDefaultMessage(
-	parentCtx context.Context, message *domain.DefaultMessage,
-) (*domain.DefaultMessage, error) {
+	// TODO: ADD TRANSACTION
 
 	ctx, cancel := contexthandler.EnsureCtxTimeout(parentCtx, ctxTimeout)
 	defer cancel()
@@ -36,15 +22,23 @@ func (p *Postgres) SaveDefaultMessage(
 		return nil, storage.CtxError(ctx.Err())
 	}
 
+	message := textMessage.GetMessage()
+
 	result := p.DB.Client.WithContext(ctx).Create(message)
 	customErr := postgrespet.ErrorWrapper(result.Error)
 	if customErr != nil {
 		err := ErrorFactory(customErr)
-		return message, err
+		return nil, err
 	}
 
-	// DELETE
-	log.Println(message)
+	text := textMessage.GetText()
 
-	return message, nil
+	result = p.DB.Client.WithContext(ctx).Create(text)
+	customErr = postgrespet.ErrorWrapper(result.Error)
+	if customErr != nil {
+		err := ErrorFactory(customErr)
+		return nil, err
+	}
+
+	return textMessage, nil
 }

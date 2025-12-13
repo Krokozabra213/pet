@@ -45,26 +45,14 @@ func TestRegisterLogin_Errors(t *testing.T) {
 		sendMessages = append(sendMessages, msg)
 	}
 
-	// for i := 0; i < 50; i++ {
-	// 	msg := &chat.ClientMessage{
-	// 		Type: &chat.ClientMessage_Leave{
-	// 			Leave: &chat.LeaveChat{
-	// 				UserId:   1,
-	// 				Username: "random",
-	// 			},
-	// 		},
-	// 	}
-	// 	sendMessages = append(sendMessages, msg)
-	// }
-
 	i = 0
 	for _, stream := range st.Streams {
-		time.Sleep(5 * time.Second)
+		time.Sleep(2 * time.Second)
 		stream.Send(sendMessages[i])
 		i++
 	}
 
-	time.Sleep(10 * time.Second)
+	time.Sleep(5 * time.Second)
 
 	// for _, msg := range messages {
 	// 	if err := st.Stream.Send(msg); err != nil {

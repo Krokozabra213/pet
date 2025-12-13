@@ -4,7 +4,7 @@ import (
 	"github.com/Krokozabra213/protos/gen/go/chat"
 	appgrpc "github.com/Krokozabra213/sso/internal/chat/app/grpc"
 	chatusecases "github.com/Krokozabra213/sso/internal/chat/business/usecases"
-	chatgrpc "github.com/Krokozabra213/sso/internal/chat/grpc"
+	chatinterfaces "github.com/Krokozabra213/sso/internal/chat/grpc/interfaces"
 	custombroker "github.com/Krokozabra213/sso/pkg/custom-broker"
 	postgrespet "github.com/Krokozabra213/sso/pkg/db/postgres-pet"
 )
@@ -18,17 +18,17 @@ type IAppBuilder interface {
 	// Repository providers
 	ClientProvider(brokerConn *custombroker.CBroker) chatusecases.IClientRepo
 	MessageProvider(brokerConn *custombroker.CBroker) chatusecases.IMessageRepo
-	DefaultMessageSaver(dbconn *postgrespet.PGDB) chatusecases.IDefaultMessageSaver
+	MessageSaver(dbconn *postgrespet.PGDB) chatusecases.IMessageSaver
 
 	// Business logic layer
 	Business(
 		clientProvider chatusecases.IClientRepo,
 		messageProvider chatusecases.IMessageRepo,
-		defaultMessageSaver chatusecases.IDefaultMessageSaver,
-	) chatgrpc.IBusiness
+		MessageSaver chatusecases.IMessageSaver,
+	) chatinterfaces.IBusiness
 
 	// gRPC handler
-	Handler(business chatgrpc.IBusiness) chat.ChatServer
+	Handler(business chatinterfaces.IBusiness) chat.ChatServer
 
 	// Application builder
 	BuildGRPCApp(handler chat.ChatServer) *appgrpc.App
@@ -52,11 +52,11 @@ func (fact *AppFactory) Create() *appgrpc.App {
 	// Repositories
 	clientRepo := fact.builder.ClientProvider(brokerConn)
 	messageRepo := fact.builder.MessageProvider(brokerConn)
-	defaultMessageSaver := fact.builder.DefaultMessageSaver(pgConn)
+	messageSaver := fact.builder.MessageSaver(pgConn)
 
 	// Business-Logic
 	business := fact.builder.Business(
-		clientRepo, messageRepo, defaultMessageSaver,
+		clientRepo, messageRepo, messageSaver,
 	)
 
 	// Handler
