@@ -7,25 +7,26 @@ type IImage interface {
 }
 
 type Image struct {
-	id        uint64 `gorm:"primarykey;column:id"`
-	messageID uint64 `gorm:"uniqueIndex;column:message_id;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
-	imageUrl  string `gorm:"column:image_url"`
+	ID        uint64  `gorm:"primarykey;column:id"`
+	MessageID uint64  `gorm:"uniqueIndex;column:message_id;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	ImageUrl  string  `gorm:"column:image_url"`
+	Message   Message `gorm:"foreignKey:MessageID;references:ID"`
 }
 
 func NewImage(url string) *Image {
 	return &Image{
-		imageUrl: url,
+		ImageUrl: url,
 	}
 }
 
 func (i *Image) SetMessageID(id uint64) {
-	i.messageID = id
+	i.MessageID = id
 }
 
 func (i *Image) GetMessageID() uint64 {
-	return i.messageID
+	return i.MessageID
 }
 
 func (i *Image) GetImageUrl() string {
-	return i.imageUrl
+	return i.ImageUrl
 }

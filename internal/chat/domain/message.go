@@ -13,33 +13,33 @@ type IMessage interface {
 }
 
 type Message struct {
-	id           uint64         `gorm:"primarykey;column:id"`
-	userID       int64          `gorm:"column:user_id"`
-	username     string         `gorm:"column:username"`
-	type_message string         `gorm:"column:type"`
-	timestamp    time.Time      `gorm:"type:timestamptz;default:CURRENT_TIMESTAMP;column:timestamp"`
-	deletedAt    gorm.DeletedAt `gorm:"column:deleted_at"`
+	ID        uint64         `gorm:"primarykey;column:id"`
+	UserID    int64          `gorm:"column:user_id"`
+	Username  string         `gorm:"-"`
+	Type      string         `gorm:"column:type"`
+	Timestamp time.Time      `gorm:"type:timestamptz;default:CURRENT_TIMESTAMP;column:timestamp"`
+	DeletedAt gorm.DeletedAt `gorm:"column:deleted_at"`
 }
 
 func NewMessage(username string, userID int64) *Message {
 	return &Message{
-		userID:   userID,
-		username: username,
+		UserID:   userID,
+		Username: username,
 	}
 }
 
 func (m *Message) GetUserID() int64 {
-	return m.userID
+	return m.UserID
 }
 
 func (m *Message) GetUsername() string {
-	return m.username
+	return m.Username
 }
 
 func (m *Message) GetType() string {
-	return m.type_message
+	return m.Type
 }
 
 func (m *Message) GetTimestamp() time.Time {
-	return m.timestamp
+	return m.Timestamp
 }

@@ -8,6 +8,7 @@ import (
 
 const (
 	ctxTimeout = 3 * time.Second
+	MaxRetries = 3
 )
 
 type Postgres struct {
