@@ -2,6 +2,8 @@ package domain
 
 import "time"
 
+const TokenEntity = "Token"
+
 type BlackToken struct {
 	Exp   time.Time
 	Token string `gorm:"uniqueIndex;size:64"`
@@ -25,5 +27,3 @@ func NewTokenPair(access, refresh string) *TokenPair {
 		RefreshToken: refresh,
 	}
 }
-
-const TokenEntity = "Token"

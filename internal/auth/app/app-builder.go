@@ -6,7 +6,7 @@ import (
 	"github.com/Krokozabra213/protos/gen/go/sso"
 	"github.com/Krokozabra213/sso/configs/ssoconfig"
 	appgrpc "github.com/Krokozabra213/sso/internal/auth/app/grpc"
-	authBusiness "github.com/Krokozabra213/sso/internal/auth/business"
+	authusecases "github.com/Krokozabra213/sso/internal/auth/business/usecases"
 	authgrpc "github.com/Krokozabra213/sso/internal/auth/grpc"
 	keymanager "github.com/Krokozabra213/sso/internal/auth/lib/key-manager"
 	"github.com/Krokozabra213/sso/internal/auth/repository/storage/postgres"
@@ -39,29 +39,29 @@ func (builder *AuthAppBuilder) NoSQLDBConn() *redispet.RDB {
 }
 
 // repositories
-func (builder *AuthAppBuilder) UserProvider(connect *postgrespet.PGDB) authBusiness.IUserProvider {
+func (builder *AuthAppBuilder) UserProvider(connect *postgrespet.PGDB) authusecases.IUserProvider {
 	return postgres.New(connect)
 }
 
-func (builder *AuthAppBuilder) AppProvider(connect *postgrespet.PGDB) authBusiness.IAppProvider {
+func (builder *AuthAppBuilder) AppProvider(connect *postgrespet.PGDB) authusecases.IAppProvider {
 	return postgres.New(connect)
 }
 
-func (builder *AuthAppBuilder) TokenProvider(connect *redispet.RDB) authBusiness.ITokenProvider {
+func (builder *AuthAppBuilder) TokenProvider(connect *redispet.RDB) authusecases.ITokenProvider {
 	return redis.New(connect)
 }
 
 // libraries
-func (builder *AuthAppBuilder) KeyManager() authBusiness.IKeyManager {
+func (builder *AuthAppBuilder) KeyManager() authusecases.IKeyManager {
 	return keymanager.New(builder.cfg.Security.PrivateKey)
 }
 
 // business-logic
 func (builder *AuthAppBuilder) Business(
-	userProvider authBusiness.IUserProvider, appProvider authBusiness.IAppProvider,
-	tokenRepo authBusiness.ITokenProvider, keyManager authBusiness.IKeyManager,
+	userProvider authusecases.IUserProvider, appProvider authusecases.IAppProvider,
+	tokenRepo authusecases.ITokenProvider, keyManager authusecases.IKeyManager,
 ) authgrpc.IBusiness {
-	return authBusiness.New(
+	return authusecases.New(
 		builder.log, builder.cfg,
 		userProvider, appProvider, // sqldb
 		tokenRepo, //nosqldb

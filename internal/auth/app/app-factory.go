@@ -3,7 +3,7 @@ package app
 import (
 	"github.com/Krokozabra213/protos/gen/go/sso"
 	appgrpc "github.com/Krokozabra213/sso/internal/auth/app/grpc"
-	authBusiness "github.com/Krokozabra213/sso/internal/auth/business"
+	authusecases "github.com/Krokozabra213/sso/internal/auth/business/usecases"
 	authgrpc "github.com/Krokozabra213/sso/internal/auth/grpc"
 	postgrespet "github.com/Krokozabra213/sso/pkg/db/postgres-pet"
 	redispet "github.com/Krokozabra213/sso/pkg/db/redis-pet"
@@ -15,19 +15,19 @@ type IAppBuilder interface {
 	NoSQLDBConn() *redispet.RDB
 
 	// Repositories
-	UserProvider(connect *postgrespet.PGDB) authBusiness.IUserProvider
-	AppProvider(connect *postgrespet.PGDB) authBusiness.IAppProvider
-	TokenProvider(connect *redispet.RDB) authBusiness.ITokenProvider
+	UserProvider(connect *postgrespet.PGDB) authusecases.IUserProvider
+	AppProvider(connect *postgrespet.PGDB) authusecases.IAppProvider
+	TokenProvider(connect *redispet.RDB) authusecases.ITokenProvider
 
 	// Libraries
-	KeyManager() authBusiness.IKeyManager
+	KeyManager() authusecases.IKeyManager
 
 	// Business-Logic
 	Business(
-		userProvider authBusiness.IUserProvider,
-		appProvider authBusiness.IAppProvider,
-		tokenRepo authBusiness.ITokenProvider,
-		keyManager authBusiness.IKeyManager,
+		userProvider authusecases.IUserProvider,
+		appProvider authusecases.IAppProvider,
+		tokenRepo authusecases.ITokenProvider,
+		keyManager authusecases.IKeyManager,
 	) authgrpc.IBusiness
 
 	// Handler
