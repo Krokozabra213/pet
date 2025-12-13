@@ -4,12 +4,12 @@ import (
 	"context"
 	"log/slog"
 
-	chatgrpc "github.com/Krokozabra213/sso/internal/chat/grpc"
+	chatinterfaces "github.com/Krokozabra213/sso/internal/chat/grpc/interfaces"
 
 	custombroker "github.com/Krokozabra213/sso/pkg/custom-broker"
 )
 
-func (a *Chat) Subscribe(ctx context.Context, username string) (chatgrpc.IChatClient, error) {
+func (a *Chat) Subscribe(ctx context.Context, username string) (chatinterfaces.IChatClient, error) {
 
 	const op = "chat.Subscribe-Business"
 	log := a.log.With(

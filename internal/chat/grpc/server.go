@@ -1,11 +1,10 @@
 package chatgrpc
 
 import (
-	"context"
 	"log/slog"
 
 	"github.com/Krokozabra213/protos/gen/go/chat"
-	"github.com/Krokozabra213/sso/internal/chat/domain"
+	chatinterfaces "github.com/Krokozabra213/sso/internal/chat/grpc/interfaces"
 	recvprocessor "github.com/Krokozabra213/sso/internal/chat/grpc/recv-processor"
 	handlersfactory "github.com/Krokozabra213/sso/internal/chat/grpc/recv-processor/handlers-factory"
 	sendtoclienthander "github.com/Krokozabra213/sso/internal/chat/grpc/send-to-client-hander"
@@ -17,26 +16,13 @@ const (
 	ErrChanCap = 2
 )
 
-type IChatClient interface {
-	GetUUID() uint64
-	GetName() string
-	GetBuffer() chan interface{}
-	GetDone() chan struct{}
-}
-
-type IBusiness interface {
-	Subscribe(ctx context.Context, username string) (IChatClient, error)
-	SendDefaultMessage(ctx context.Context, msg *domain.DefaultMessage) error
-	Unsubscribe(userID uint64)
-}
-
 type ServerAPI struct {
 	chat.UnimplementedChatServer
-	Business IBusiness
+	Business chatinterfaces.IBusiness
 	Log      *slog.Logger
 }
 
-func New(log *slog.Logger, business IBusiness) *ServerAPI {
+func New(log *slog.Logger, business chatinterfaces.IBusiness) *ServerAPI {
 	return &ServerAPI{
 		Business: business,
 		Log:      log,

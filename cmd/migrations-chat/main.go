@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/Krokozabra213/sso/internal/chat/domain"
+	chatdomain "github.com/Krokozabra213/sso/internal/chat/domain"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -33,7 +33,7 @@ func main() {
 		panic(err)
 	}
 
-	err = db.AutoMigrate(&domain.DefaultMessage{})
+	err = db.AutoMigrate(&chatdomain.Message{}, &chatdomain.Text{}, &chatdomain.Image{})
 	if err != nil {
 		log.Printf("Migration error: %v", err)
 	}

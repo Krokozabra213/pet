@@ -13,6 +13,8 @@ func ErrorFactory(err error) error {
 	var customErr *postgrespet.CustomError
 	if errors.As(err, &customErr) {
 		switch {
+		case errors.Is(err, postgrespet.ErrTransaction):
+			return storage.ErrTransaction
 		case errors.Is(err, postgrespet.ErrCtxCancelled):
 			return storage.ErrCtxCancelled
 		case errors.Is(err, postgrespet.ErrCtxDeadline):

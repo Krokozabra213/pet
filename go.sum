@@ -1,5 +1,7 @@
-github.com/Krokozabra213/protos v1.5.0 h1:GLBy2jMqi9UdzSnxul8NzC67ND8jUpaIW0FiFIfUcVk=
-github.com/Krokozabra213/protos v1.5.0/go.mod h1:oBaHJRDetoUmlCWtEmYhs0QK4iN6C3Iyh/IUEkDUISI=
+github.com/Krokozabra213/protos v1.8.0 h1:bHgYLzAIO+yIyPRzha/fM/9fkbZ2m32+D4PTmLpDDJw=
+github.com/Krokozabra213/protos v1.8.0/go.mod h1:oBaHJRDetoUmlCWtEmYhs0QK4iN6C3Iyh/IUEkDUISI=
+github.com/Krokozabra213/protos v1.9.0 h1:0gFQ9MpO+8dBhb05v6Kyhp4Dg+3g9qZgB40Ngb9Jq94=
+github.com/Krokozabra213/protos v1.9.0/go.mod h1:oBaHJRDetoUmlCWtEmYhs0QK4iN6C3Iyh/IUEkDUISI=
 github.com/brianvoe/gofakeit/v6 v6.28.0 h1:Xib46XXuQfmlLS2EXRuJpqcw8St6qSZz75OUo0tgAW4=
 github.com/brianvoe/gofakeit/v6 v6.28.0/go.mod h1:Xj58BMSnFqcn/fAQeSK+/PLtC5kSb7FJIq4JyGa8vEs=
 github.com/bsm/ginkgo/v2 v2.5.0 h1:aOAnND1T40wEdAtkGSkvSICWeQ8L3UASX7YVCqQx+eQ=

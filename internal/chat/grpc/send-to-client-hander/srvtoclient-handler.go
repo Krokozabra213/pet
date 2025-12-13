@@ -71,7 +71,7 @@ func (handler *SendToClientHandler) Run() (err error) {
 		}
 
 		var serverMessage *chat.ServerMessage
-		if msg, ok := message.(domain.IServerMessage); ok {
+		if msg, ok := message.(chatdomain.IConvertServerMessage); ok {
 			serverMessage = msg.ConvertToServerMessage()
 		} else {
 			return status.Error(codes.InvalidArgument, ErrUnknownMessageType.Error())
