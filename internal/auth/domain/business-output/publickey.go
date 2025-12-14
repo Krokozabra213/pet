@@ -10,6 +10,6 @@ func NewPublicKeyOutput(publicKey string) *PublicKeyOutput {
 	}
 }
 
-func (input *PublicKeyOutput) GetPublicKey() string {
-	return input.publicKey
+func (i *PublicKeyOutput) GetPublicKey() string {
+	return i.publicKey
 }

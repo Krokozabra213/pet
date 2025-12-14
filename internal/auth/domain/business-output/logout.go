@@ -10,6 +10,6 @@ func NewLogoutOutput(success bool) *LogoutOutput {
 	}
 }
 
-func (input *LogoutOutput) GetSuccess() bool {
-	return input.success
+func (i *LogoutOutput) GetSuccess() bool {
+	return i.success
 }

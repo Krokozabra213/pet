@@ -10,6 +10,6 @@ func NewIsAdminInput(userID int64) *IsAdminInput {
 	}
 }
 
-func (input *IsAdminInput) GetUserID() int64 {
-	return input.userID
+func (i *IsAdminInput) GetUserID() int64 {
+	return i.userID
 }

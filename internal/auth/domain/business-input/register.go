@@ -12,10 +12,10 @@ func NewRegisterInput(username string, password string) *RegisterInput {
 	}
 }
 
-func (input *RegisterInput) GetUsername() string {
-	return input.username
+func (i *RegisterInput) GetUsername() string {
+	return i.username
 }
 
-func (input *RegisterInput) GetPassword() string {
-	return input.password
+func (i *RegisterInput) GetPassword() string {
+	return i.password
 }

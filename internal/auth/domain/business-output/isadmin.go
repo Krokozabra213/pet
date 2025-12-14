@@ -10,6 +10,6 @@ func NewIsAdminOutput(access bool) *IsAdminOutput {
 	}
 }
 
-func (input *IsAdminOutput) GetAccess() bool {
-	return input.access
+func (i *IsAdminOutput) GetAccess() bool {
+	return i.access
 }

@@ -10,6 +10,6 @@ func NewRegisterOutput(userID uint64) *RegisterOutput {
 	}
 }
 
-func (input *RegisterOutput) GetUserID() uint64 {
-	return input.userID
+func (i *RegisterOutput) GetUserID() uint64 {
+	return i.userID
 }

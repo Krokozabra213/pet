@@ -8,7 +8,7 @@ import (
 
 	"github.com/Krokozabra213/sso/configs/ssoconfig"
 	"github.com/Krokozabra213/sso/internal/auth/domain"
-	authgrpc "github.com/Krokozabra213/sso/internal/auth/grpc"
+	authgrpc "github.com/Krokozabra213/sso/internal/auth/grpc/auth-grpc"
 )
 
 type ITokenProvider interface {

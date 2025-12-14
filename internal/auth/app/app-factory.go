@@ -4,7 +4,7 @@ import (
 	"github.com/Krokozabra213/protos/gen/go/sso"
 	appgrpc "github.com/Krokozabra213/sso/internal/auth/app/grpc"
 	authusecases "github.com/Krokozabra213/sso/internal/auth/business/usecases"
-	authgrpc "github.com/Krokozabra213/sso/internal/auth/grpc"
+	authgrpc "github.com/Krokozabra213/sso/internal/auth/grpc/auth-grpc"
 	postgrespet "github.com/Krokozabra213/sso/pkg/db/postgres-pet"
 	redispet "github.com/Krokozabra213/sso/pkg/db/redis-pet"
 )
