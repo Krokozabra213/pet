@@ -3,7 +3,7 @@ module github.com/Krokozabra213/sso
 go 1.24.4
 
 require (
-	github.com/Krokozabra213/protos v1.5.0
+	github.com/Krokozabra213/protos v1.9.0
 	github.com/brianvoe/gofakeit/v6 v6.28.0
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.3

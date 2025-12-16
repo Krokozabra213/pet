@@ -8,8 +8,9 @@ var (
 	ErrUnknown      = errors.New("unknown error")
 
 	// postgres errors
-	ErrValidation = errors.New("validation error")
-	ErrDuplicate  = errors.New("duplicate key error")
-	ErrNotFound   = errors.New("not found error")
-	ErrInternal   = errors.New("internal error")
+	ErrValidation  = errors.New("validation error")
+	ErrDuplicate   = errors.New("duplicate key error")
+	ErrNotFound    = errors.New("not found error")
+	ErrInternal    = errors.New("internal error")
+	ErrTransaction = errors.New("transaction error")
 )

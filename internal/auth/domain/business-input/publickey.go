@@ -10,6 +10,6 @@ func NewPublicKeyInput(appID int) *PublicKeyInput {
 	}
 }
 
-func (input *PublicKeyInput) GetAppID() int {
-	return input.appID
+func (i *PublicKeyInput) GetAppID() int {
+	return i.appID
 }

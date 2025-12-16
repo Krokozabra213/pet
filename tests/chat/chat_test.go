@@ -33,7 +33,27 @@ func TestRegisterLogin_Errors(t *testing.T) {
 		// time.Sleep(time.Second)
 	}
 
-	sendMessages := make([]*chat.ClientMessage, 0, 50)
+	// ImageMessages := make([]*chat.ClientMessage, 0, 50)
+	// for i := 0; i < 50; i++ {
+	// 	msg := &chat.ClientMessage{
+	// 		Type: &chat.ClientMessage_ImageMessage{
+	// 			ImageMessage: &chat.ImageMessage{
+	// 				ImageName: "content" + strconv.Itoa(i),
+	// 				ImageUrl:  "content" + strconv.Itoa(i),
+	// 			},
+	// 		},
+	// 	}
+	// 	ImageMessages = append(ImageMessages, msg)
+	// }
+
+	// i = 0
+	// for _, stream := range st.Streams {
+	// 	time.Sleep(2 * time.Second)
+	// 	stream.Send(ImageMessages[i])
+	// 	i++
+	// }
+
+	textMessages := make([]*chat.ClientMessage, 0, 50)
 	for i := 0; i < 50; i++ {
 		msg := &chat.ClientMessage{
 			Type: &chat.ClientMessage_SendMessage{
@@ -42,29 +62,15 @@ func TestRegisterLogin_Errors(t *testing.T) {
 				},
 			},
 		}
-		sendMessages = append(sendMessages, msg)
+		textMessages = append(textMessages, msg)
 	}
-
-	// for i := 0; i < 50; i++ {
-	// 	msg := &chat.ClientMessage{
-	// 		Type: &chat.ClientMessage_Leave{
-	// 			Leave: &chat.LeaveChat{
-	// 				UserId:   1,
-	// 				Username: "random",
-	// 			},
-	// 		},
-	// 	}
-	// 	sendMessages = append(sendMessages, msg)
-	// }
 
 	i = 0
 	for _, stream := range st.Streams {
-		time.Sleep(5 * time.Second)
-		stream.Send(sendMessages[i])
+		time.Sleep(2 * time.Second)
+		stream.Send(textMessages[i])
 		i++
 	}
-
-	time.Sleep(10 * time.Second)
 
 	// for _, msg := range messages {
 	// 	if err := st.Stream.Send(msg); err != nil {

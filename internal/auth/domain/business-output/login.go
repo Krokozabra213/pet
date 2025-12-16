@@ -12,10 +12,10 @@ func NewLoginOutput(accessToken string, refreshToken string) *LoginOutput {
 	}
 }
 
-func (input *LoginOutput) GetAccess() string {
-	return input.accessT
+func (i *LoginOutput) GetAccess() string {
+	return i.accessT
 }
 
-func (input *LoginOutput) GetRefresh() string {
-	return input.refreshT
+func (i *LoginOutput) GetRefresh() string {
+	return i.refreshT
 }

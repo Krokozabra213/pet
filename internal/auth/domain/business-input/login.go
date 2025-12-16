@@ -14,14 +14,14 @@ func NewLoginInput(username string, password string, appID int) *LoginInput {
 	}
 }
 
-func (input *LoginInput) GetUsername() string {
-	return input.username
+func (i *LoginInput) GetUsername() string {
+	return i.username
 }
 
-func (input *LoginInput) GetPassword() string {
-	return input.password
+func (i *LoginInput) GetPassword() string {
+	return i.password
 }
 
-func (input *LoginInput) GetAppID() int {
-	return input.appID
+func (i *LoginInput) GetAppID() int {
+	return i.appID
 }

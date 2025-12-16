@@ -10,6 +10,6 @@ func NewLogoutInput(token string) *LogoutInput {
 	}
 }
 
-func (input *LogoutInput) GetRefreshToken() string {
-	return input.refreshToken
+func (i *LogoutInput) GetRefreshToken() string {
+	return i.refreshToken
 }

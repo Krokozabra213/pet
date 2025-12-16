@@ -7,7 +7,7 @@ import (
 	"github.com/Krokozabra213/sso/configs/ssoconfig"
 	appgrpc "github.com/Krokozabra213/sso/internal/auth/app/grpc"
 	authusecases "github.com/Krokozabra213/sso/internal/auth/business/usecases"
-	authgrpc "github.com/Krokozabra213/sso/internal/auth/grpc"
+	authgrpc "github.com/Krokozabra213/sso/internal/auth/grpc/auth-grpc"
 	keymanager "github.com/Krokozabra213/sso/internal/auth/lib/key-manager"
 	"github.com/Krokozabra213/sso/internal/auth/repository/storage/postgres"
 	"github.com/Krokozabra213/sso/internal/auth/repository/storage/redis"

@@ -12,10 +12,10 @@ func NewRefreshOutput(accessToken string, refreshToken string) *RefreshOutput {
 	}
 }
 
-func (input *RefreshOutput) GetAccess() string {
-	return input.accessT
+func (i *RefreshOutput) GetAccess() string {
+	return i.accessT
 }
 
-func (input *RefreshOutput) GetRefresh() string {
-	return input.refreshT
+func (i *RefreshOutput) GetRefresh() string {
+	return i.refreshT
 }

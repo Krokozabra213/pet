@@ -10,6 +10,6 @@ func NewRefreshInput(token string) *RefreshInput {
 	}
 }
 
-func (input *RefreshInput) GetRefreshToken() string {
-	return input.refreshToken
+func (i *RefreshInput) GetRefreshToken() string {
+	return i.refreshToken
 }
