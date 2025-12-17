@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"log"
 	"testing"
 
 	"github.com/Krokozabra213/protos/gen/go/sso"
@@ -29,6 +30,8 @@ func TestRegisterLogin_Errors(t *testing.T) {
 
 	username := randomUsername()
 	pass := randomFakePassword()
+
+	log.Println(pass)
 
 	// проверка регистрации на ошибки
 	respReg, err := st.AuthClient.Register(ctx, &sso.RegisterRequest{

@@ -7,7 +7,9 @@ const (
 )
 
 func randomFakePassword() string {
-	return gofakeit.Password(true, true, true, true, true, passDefaultLen)
+	left := gofakeit.Password(true, true, false, false, false, 1)
+	right := gofakeit.Password(true, true, true, false, false, passDefaultLen)
+	return left + right
 }
 
 func randomUsername() string {
