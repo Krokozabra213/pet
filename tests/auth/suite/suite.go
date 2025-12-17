@@ -71,10 +71,7 @@ func (s *SSOSuite) CleanupTestData() error {
 	if err != nil {
 		return err
 	}
-	err = s.CleanupBlackTokensData()
-	if err != nil {
-		return err
-	}
+
 	err = s.CleanupAppsData()
 	if err != nil {
 		return err
@@ -93,16 +90,6 @@ func (s *SSOSuite) CleanupTestData() error {
 func (s *SSOSuite) CleanupUserData() error {
 	// удаляем все строки в таблице users
 	result := s.DB.Client.Exec("TRUNCATE TABLE users CASCADE")
-	if result.Error != nil {
-		return result.Error
-	}
-	return nil
-}
-
-// поменять на redis
-func (s *SSOSuite) CleanupBlackTokensData() error {
-	// удаляем все строки в таблице black_tokens
-	result := s.DB.Client.Exec("TRUNCATE TABLE black_tokens CASCADE")
 	if result.Error != nil {
 		return result.Error
 	}

@@ -20,12 +20,12 @@ func (p *Postgres) SaveUser(
 		return 0, storage.CtxError(ctx.Err())
 	}
 
-	result := p.DB.Client.WithContext(ctx).Create(user)
+	err = p.DB.Client.WithContext(ctx).Create(user).Error
 
-	customErr := postgrespet.ErrorWrapper(result.Error)
-	if customErr != nil {
-		err := ErrorFactory(domain.UserEntity, customErr)
-		return 0, err
+	if err != nil {
+		customErr := postgrespet.ErrorWrapper(err)
+		repoErr := ErrorFactory(domain.UserEntity, customErr)
+		return 0, repoErr
 	}
 
 	return user.ID, nil
@@ -43,13 +43,13 @@ func (p *Postgres) User(
 	}
 
 	var user domain.User
-	result := p.DB.Client.WithContext(ctx).First(&user, "username = ?", username)
-
-	customErr := postgrespet.ErrorWrapper(result.Error)
-	if customErr != nil {
-		err := ErrorFactory(domain.UserEntity, customErr)
-		return nil, err
+	err := p.DB.Client.WithContext(ctx).First(&user, "username = ?", username).Error
+	if err != nil {
+		customErr := postgrespet.ErrorWrapper(err)
+		repoErr := ErrorFactory(domain.UserEntity, customErr)
+		return nil, repoErr
 	}
+
 	return &user, nil
 }
 

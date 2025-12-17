@@ -20,12 +20,12 @@ func (p *Postgres) SaveToken(
 		return storage.CtxError(ctx.Err())
 	}
 
-	result := p.DB.Client.WithContext(ctx).Create(token)
-
-	customErr := postgrespet.ErrorWrapper(result.Error)
-	if customErr != nil {
-		err := ErrorFactory(domain.TokenEntity, customErr)
-		return err
+	err = p.DB.Client.WithContext(ctx).Create(token).Error
+	if err != nil {
+		customErr := postgrespet.ErrorWrapper(err)
+		repoErr := ErrorFactory(domain.TokenEntity, customErr)
+		return repoErr
 	}
+
 	return nil
 }
