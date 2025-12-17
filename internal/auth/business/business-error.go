@@ -47,17 +47,11 @@ func (e *BError) GRPCCode() codes.Code {
 	case errors.Is(e.Err, ErrNotFound):
 		return codes.NotFound // Запрошенная сущность (например, пользователь) не найдена.
 
-	case errors.Is(e.Err, ErrInternal):
+	case errors.Is(e.Err, ErrInternal) || errors.Is(e.Err, ErrHashPassword) || errors.Is(e.Err, ErrTokenGenerate):
 		return codes.Internal // Внутренняя ошибка сервера, не зависящая от клиента.
 
-	case errors.Is(e.Err, ErrHashPassword):
-		return codes.Internal // Ошибка хеширования — это внутренняя проблема сервера.
-
-	case errors.Is(e.Err, ErrInvalidCredentials):
-		return codes.Unauthenticated // Неверные учетные данные (пароль, логин).
-
-	case errors.Is(e.Err, ErrTokenGenerate):
-		return codes.Internal // Не удалось сгенерировать токен — внутренняя ошибка.
+	case errors.Is(e.Err, ErrInvalidCredentials) || errors.Is(e.Err, ErrTokenExpired) || errors.Is(e.Err, ErrTokenRevoked):
+		return codes.Unauthenticated
 
 	case errors.Is(e.Err, ErrParse):
 		return codes.InvalidArgument // Ошибка парсинга данных от клиента (напр., невалидный JWT).
@@ -65,14 +59,8 @@ func (e *BError) GRPCCode() codes.Code {
 	case errors.Is(e.Err, ErrPermission):
 		return codes.PermissionDenied // Пользователь аутентифицирован, но у него нет прав.
 
-	case errors.Is(e.Err, ErrTokenExpired):
-		return codes.Unauthenticated // Срок действия токена истек.
-
-	case errors.Is(e.Err, ErrTokenRevoked):
-		return codes.Unauthenticated // Токен отозван и больше не действителен.
-
 	default:
-		// Для любых неизвестных ошибок безопаснее всего вернуть Internal.
+		// Для любых неизвестных ошибок
 		return codes.Internal
 	}
 }
