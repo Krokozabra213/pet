@@ -1,0 +1,21 @@
+grpc:
+  readTimeout: 10s
+  writeTimeout: 10s
+  maxHeaderBytes: 1
+  host: localhost
+  port: 44044
+
+http:
+  maxHeaderBytes: 1
+  readTimeout: 10s
+  writeTimeout: 10s
+  host: localhost
+  port: 8090
+
+logger:
+  level: -4
+
+auth:
+  accessTokenTTL: 15m
+  refreshTokenTTL: 43200m
+  privateKeyPath: ./secrets/private.pem

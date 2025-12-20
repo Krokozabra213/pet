@@ -57,8 +57,8 @@ func TestRegisterLogin_Login_HappyPath(t *testing.T) {
 	require.NoError(t, err)
 
 	loginTime := time.Now()
-	accessExp := loginTime.Add(time.Duration(st.Cfg.Security.AccessTokenTTL) * time.Second)
-	refreshExp := loginTime.Add(time.Duration(st.Cfg.Security.RefreshTokenTTL) * time.Second)
+	accessExp := loginTime.Add(st.Cfg.Auth.JWT.AccessTokenTTL)
+	refreshExp := loginTime.Add(st.Cfg.Auth.JWT.RefreshTokenTTL)
 
 	accessToken := respLogin.GetAccessToken()
 	refreshToken := respLogin.GetRefreshToken()
@@ -89,8 +89,8 @@ func TestRegisterLogin_Login_HappyPath(t *testing.T) {
 	require.NoError(t, err)
 
 	refreshTime := time.Now()
-	accessExp = refreshTime.Add(time.Duration(st.Cfg.Security.AccessTokenTTL) * time.Second)
-	refreshExp = refreshTime.Add(time.Duration(st.Cfg.Security.RefreshTokenTTL) * time.Second)
+	accessExp = refreshTime.Add(st.Cfg.Auth.JWT.AccessTokenTTL)
+	refreshExp = refreshTime.Add(st.Cfg.Auth.JWT.RefreshTokenTTL)
 
 	accessToken = respRefresh.GetAccessToken()
 	refreshToken = respRefresh.GetRefreshToken()

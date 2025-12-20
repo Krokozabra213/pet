@@ -1,30 +1,15 @@
 services:
-  postgres_chat:
+  postgres:
     container_name: postgres_chat_go
     image: postgres:16.4
     environment:
-      POSTGRES_USER: user_chat
-      POSTGRES_PASSWORD: password_chat
-      POSTGRES_DB: postgres_chat
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: postgres
       PGDATA: /data/postgres/chat
     command: postgres -p 5600  # Запуск с другим портом внутри контейнера
     volumes:
       - ./postgres-data/chat:/data/postgres/chat
     ports:
       - "0.0.0.0:5600:5600"
-    restart: unless-stopped
-
-  postgres_chat_test:
-    container_name: postgres_chat_test_go
-    image: postgres:16.4
-    environment:
-      POSTGRES_USER: user_chat_test
-      POSTGRES_PASSWORD: password_chat_test
-      POSTGRES_DB: postgres_chat_test
-      PGDATA: /data/postgres/chat_test
-    command: postgres -p 5601
-    volumes:
-      - ./postgres-data/chat_test:/data/postgres/chat_test
-    ports:
-      - "0.0.0.0:5601:5601"
     restart: unless-stopped

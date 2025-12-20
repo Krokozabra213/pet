@@ -6,9 +6,9 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/Krokozabra213/sso/configs/ssoconfig"
 	"github.com/Krokozabra213/sso/internal/auth/domain"
 	authgrpc "github.com/Krokozabra213/sso/internal/auth/grpc/auth-grpc"
+	ssonewconfig "github.com/Krokozabra213/sso/newconfigs/sso"
 )
 
 type ITokenProvider interface {
@@ -35,7 +35,7 @@ type IKeyManager interface {
 
 type Auth struct {
 	log          *slog.Logger
-	cfg          *ssoconfig.Config
+	cfg          *ssonewconfig.Config
 	tokenRepo    ITokenProvider
 	userProvider IUserProvider
 	appProvider  IAppProvider
@@ -43,7 +43,7 @@ type Auth struct {
 }
 
 func New(
-	log *slog.Logger, cfg *ssoconfig.Config,
+	log *slog.Logger, cfg *ssonewconfig.Config,
 	userProvider IUserProvider, appProvider IAppProvider,
 	tokenRepo ITokenProvider, keyManager IKeyManager,
 ) authgrpc.IBusiness {

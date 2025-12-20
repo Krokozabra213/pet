@@ -36,7 +36,7 @@ func (gen *TokenGenerator) refreshClaims(claims jwt.MapClaims) error {
 	claims[JWTID] = jwtID
 	claims[UserID] = gen.user.ID
 	claims[Username] = gen.user.Username
-	claims[ExpiredAt] = time.Now().Add(gen.refreshTTL * time.Second).Unix()
+	claims[ExpiredAt] = time.Now().Add(gen.refreshTTL).Unix()
 	claims[AppID] = gen.app.ID
 
 	return nil

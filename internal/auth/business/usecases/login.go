@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"log/slog"
-	"time"
 
 	authBusiness "github.com/Krokozabra213/sso/internal/auth/business"
 	"github.com/Krokozabra213/sso/internal/auth/domain"
@@ -62,8 +61,8 @@ func (a *Auth) Login(
 	}
 
 	tokenGen := jwt.New(
-		user, app, time.Duration(a.cfg.Security.AccessTokenTTL),
-		time.Duration(a.cfg.Security.RefreshTokenTTL), a.keyManager,
+		user, app, a.cfg.Auth.JWT.AccessTokenTTL,
+		a.cfg.Auth.JWT.RefreshTokenTTL, a.keyManager,
 	)
 
 	tokenPair, err := tokenGen.GenerateTokenPair()

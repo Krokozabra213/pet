@@ -1,0 +1,9 @@
+grpc:
+  maxHeaderBytes: 1
+  readTimeout: 10s
+  writeTimeout: 10s
+  host: localhost
+  port: 44045
+
+logger:
+  level: -4
