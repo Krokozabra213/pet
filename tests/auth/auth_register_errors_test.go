@@ -17,7 +17,7 @@ func TestRegisterLogin_Errors(t *testing.T) {
 		st.CleanupTestData()
 	})
 
-	appID := randomID(1, 100_000)
+	appID := randomID(1, 32_000)
 
 	// проверка getpublickey на ошибки
 	respPublicKey, err := st.AuthClient.GetPublicKey(ctx, &sso.PublicKeyRequest{
@@ -121,7 +121,7 @@ func TestRegisterLogin_Errors(t *testing.T) {
 	assert.ErrorContains(t, err, authBusiness.ErrPermission.Error())
 
 	// создаем рандомный appID для проверки getPublicKey
-	fakeAppID := randomID(1, 100_000)
+	fakeAppID := randomID(1, 32_700)
 	respPublicKey, err = st.AuthClient.GetPublicKey(ctx, &sso.PublicKeyRequest{
 		AppId: int32(fakeAppID),
 	})

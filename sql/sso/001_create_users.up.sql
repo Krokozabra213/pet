@@ -7,5 +7,4 @@ CREATE TABLE IF NOT EXISTS users (
   deleted_at TIMESTAMPTZ
 );
 
-CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS idx_username 
-ON users(username);
+

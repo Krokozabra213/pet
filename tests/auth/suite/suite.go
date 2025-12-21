@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/Krokozabra213/protos/gen/go/sso"
-	"github.com/Krokozabra213/sso/configs/ssoconfig"
 	"github.com/Krokozabra213/sso/internal/auth/domain"
+	ssonewconfig "github.com/Krokozabra213/sso/newconfigs/sso"
 	postgrespet "github.com/Krokozabra213/sso/pkg/db/postgres-pet"
 	redispet "github.com/Krokozabra213/sso/pkg/db/redis-pet"
 	"google.golang.org/grpc"
@@ -24,7 +24,7 @@ const (
 
 type SSOSuite struct {
 	*testing.T
-	Cfg        *ssoconfig.Config
+	Cfg        *ssonewconfig.Config
 	AuthClient sso.AuthClient
 	DB         *postgrespet.PGDB
 	Redis      *redispet.RDB
@@ -33,10 +33,12 @@ type SSOSuite struct {
 func New(t *testing.T) (context.Context, *SSOSuite) {
 	t.Helper()
 
-	env := EnvLocal
-
-	cfg := ssoconfig.Load(env, true)
-	t.Logf("Config: %+v", cfg)
+	cfg, err := ssonewconfig.Init("settings/sso_main.yml", "sso.env")
+	cfg.PG.DSN = "host=0.0.0.0 user=user password=password dbname=postgres port=5555 sslmode=disable"
+	cfg.Redis.Addr = "0.0.0.0:6379"
+	if err != nil {
+		t.Fatalf("config init err: %v", err)
+	}
 
 	ctx, cancelCtx := context.WithTimeout(context.Background(), 30*time.Second)
 
@@ -45,11 +47,11 @@ func New(t *testing.T) (context.Context, *SSOSuite) {
 		cancelCtx()
 	})
 
-	DB := postgrespet.NewPGDB(cfg.DB.DSN)
+	DB := postgrespet.NewPGDB(cfg.PG.DSN)
 	redis := redispet.NewRedisDB(cfg.Redis.Addr, cfg.Redis.Pass, cfg.Redis.Cache)
 
 	cc, err := grpc.NewClient(
-		grpcAddress(cfg.Server.Host, cfg.Server.Port),
+		grpcAddress(cfg.GRPC.Host, cfg.GRPC.Port),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 
@@ -71,10 +73,7 @@ func (s *SSOSuite) CleanupTestData() error {
 	if err != nil {
 		return err
 	}
-	err = s.CleanupBlackTokensData()
-	if err != nil {
-		return err
-	}
+
 	err = s.CleanupAppsData()
 	if err != nil {
 		return err
@@ -93,16 +92,6 @@ func (s *SSOSuite) CleanupTestData() error {
 func (s *SSOSuite) CleanupUserData() error {
 	// удаляем все строки в таблице users
 	result := s.DB.Client.Exec("TRUNCATE TABLE users CASCADE")
-	if result.Error != nil {
-		return result.Error
-	}
-	return nil
-}
-
-// поменять на redis
-func (s *SSOSuite) CleanupBlackTokensData() error {
-	// удаляем все строки в таблице black_tokens
-	result := s.DB.Client.Exec("TRUNCATE TABLE black_tokens CASCADE")
 	if result.Error != nil {
 		return result.Error
 	}

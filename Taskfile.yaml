@@ -1,38 +1,45 @@
 version: "3"
 
 tasks:
-  migrate-sso:
-    desc: "automigrating postgres db for sso service"
+  migrate-auth:
+    deps: [docker-auth]
+    desc: "migrations for auth service"
     cmds:
-      - go run cmd/migrations-sso/main.go -host=localhost -user=user -password=password -dbname=postgres -port=5555 -sslmode=disable
-  migrate-sso-test:
-    desc: "automigrating postgres testdb for sso service"
-    cmds:
-      - go run cmd/migrations-sso/main.go -host=localhost -user=user_test -password=password_test -dbname=postgres_test -port=5556 -sslmode=disable
+      - go run cmd/migrations-sso/main.go
   migrate-chat:
-    desc: "automigrating postgres db for chat service"
+    deps: [docker-chat]
+    desc: "migrations for chat service"
     cmds:
-      - go run cmd/migrations-chat/main.go -host=localhost -user=user_chat -password=password_chat -dbname=postgres_chat -port=5600 -sslmode=disable
-  migrate-chat-test:
-    desc: "automigrating postgres testdb for chat service"
+      - go run cmd/migrations-chat/main.go
+
+  docker-chat:
+    desc: "docker compose up for chat service (detached mode)"
     cmds:
-      - go run cmd/migrations-chat/main.go -host=localhost -user=user_chat_test -password=password_chat_test -dbname=postgres_chat_test -port=5601 -sslmode=disable
-  docker-chat-prod:
-    desc: "docker compose up for production chat service"
+      - docker compose -f docker-compose.chat.yml up -d --remove-orphans postgres
+  docker-auth:
+    desc: "docker compose up for auth service (detached mode)"
     cmds:
-      - docker compose -f docker-compose.chat.yml up postgres_chat
-  docker-chat-local:
-    desc: "docker compose up for local chat service"
+      - docker compose -f docker-compose.sso.yml up -d --remove-orphans postgres redis redis-commander adminer
+  in-docker-auth:
+    desc: "docker compose up for up sso service in docker "
     cmds:
-      - docker compose -f docker-compose.chat.yml up postgres_chat_test
-  docker-sso-prod:
-    desc: "docker compose up for production sso service"
+      - docker compose -f docker-compose.sso.yml up -d --remove-orphans sso
+  in-docker-chat:
+    desc: "docker compose up for up chat service in docker "
     cmds:
-      - docker compose -f docker-compose.sso.yml up postgres redis redis-commander
-  docker-sso-local:
-    desc: "docker compose up for local sso service"
+      - docker compose -f docker-compose.chat.yml up -d --remove-orphans chat
+
+  run-auth:
+    deps: [migrate-auth]
+    desc: "run auth service"
     cmds:
-      - docker compose -f docker-compose.sso.yml up postgres_test redis redis-commander
+      - go run cmd/sso/main.go
+  run-chat:
+    deps: [migrate-chat]
+    desc: "run chat service"
+    cmds:
+      - go run cmd/chat/main.go
+
   test:
     desc: "test app"
     cmds:
@@ -42,6 +49,6 @@ tasks:
     cmds:
       - go test -v -count=1 ./tests/chat
   test-auth:
-    desc: "test chat service"
+    desc: "test auth service"
     cmds:
       - go test -v -count=1 ./tests/auth

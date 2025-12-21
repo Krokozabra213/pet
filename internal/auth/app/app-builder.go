@@ -4,23 +4,23 @@ import (
 	"log/slog"
 
 	"github.com/Krokozabra213/protos/gen/go/sso"
-	"github.com/Krokozabra213/sso/configs/ssoconfig"
 	appgrpc "github.com/Krokozabra213/sso/internal/auth/app/grpc"
 	authusecases "github.com/Krokozabra213/sso/internal/auth/business/usecases"
 	authgrpc "github.com/Krokozabra213/sso/internal/auth/grpc/auth-grpc"
 	keymanager "github.com/Krokozabra213/sso/internal/auth/lib/key-manager"
 	"github.com/Krokozabra213/sso/internal/auth/repository/storage/postgres"
 	"github.com/Krokozabra213/sso/internal/auth/repository/storage/redis"
+	ssonewconfig "github.com/Krokozabra213/sso/newconfigs/sso"
 	postgrespet "github.com/Krokozabra213/sso/pkg/db/postgres-pet"
 	redispet "github.com/Krokozabra213/sso/pkg/db/redis-pet"
 )
 
 type AuthAppBuilder struct {
-	cfg *ssoconfig.Config
+	cfg *ssonewconfig.Config
 	log *slog.Logger
 }
 
-func NewAppBuilder(cfg *ssoconfig.Config, log *slog.Logger) *AuthAppBuilder {
+func NewAppBuilder(cfg *ssonewconfig.Config, log *slog.Logger) *AuthAppBuilder {
 	return &AuthAppBuilder{
 		cfg: cfg,
 		log: log,
@@ -29,7 +29,7 @@ func NewAppBuilder(cfg *ssoconfig.Config, log *slog.Logger) *AuthAppBuilder {
 
 // connects
 func (builder *AuthAppBuilder) DBConn() *postgrespet.PGDB {
-	return postgrespet.NewPGDB(builder.cfg.DB.DSN)
+	return postgrespet.NewPGDB(builder.cfg.PG.DSN)
 }
 
 func (builder *AuthAppBuilder) NoSQLDBConn() *redispet.RDB {
@@ -53,7 +53,7 @@ func (builder *AuthAppBuilder) TokenProvider(connect *redispet.RDB) authusecases
 
 // libraries
 func (builder *AuthAppBuilder) KeyManager() authusecases.IKeyManager {
-	return keymanager.New(builder.cfg.Security.PrivateKey)
+	return keymanager.New(builder.cfg.Auth.JWT.PrivateKey)
 }
 
 // business-logic
@@ -74,5 +74,5 @@ func (builder *AuthAppBuilder) Handler(business authgrpc.IBusiness) sso.AuthServ
 }
 
 func (builder *AuthAppBuilder) BuildGRPCApp(handler sso.AuthServer) *appgrpc.GRPCApp {
-	return appgrpc.New(builder.log, builder.cfg.Server.Host, builder.cfg.Server.Port, handler)
+	return appgrpc.New(builder.log, builder.cfg.GRPC.Host, builder.cfg.GRPC.Port, handler)
 }

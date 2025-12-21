@@ -33,7 +33,7 @@ func (a *Auth) Logout(
 		return nil, authBusiness.BusinessError(domain.TokenEntity, authBusiness.ErrParse)
 	}
 
-	hashToken := hmac.HashJWTTokenHMAC(refreshToken, a.cfg.Security.Secret)
+	hashToken := hmac.HashJWTTokenHMAC(refreshToken, a.cfg.Auth.AppSecretKey)
 
 	err = a.tokenRepo.SaveToken(ctx, hashToken, claims.Exp)
 	if err != nil {

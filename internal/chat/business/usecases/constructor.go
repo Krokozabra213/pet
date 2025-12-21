@@ -3,7 +3,7 @@ package chatusecases
 import (
 	"log/slog"
 
-	"github.com/Krokozabra213/sso/configs/chatconfig"
+	chatnewconfig "github.com/Krokozabra213/sso/newconfigs/chat"
 )
 
 const (
@@ -12,14 +12,14 @@ const (
 
 type Chat struct {
 	log        *slog.Logger
-	cfg        *chatconfig.Config
+	cfg        *chatnewconfig.Config
 	clientRepo IClientRepo
 	msgRepo    IMessageRepo
 	msgSaver   IMessageSaver
 }
 
 func New(
-	log *slog.Logger, cfg *chatconfig.Config, clientRepo IClientRepo,
+	log *slog.Logger, cfg *chatnewconfig.Config, clientRepo IClientRepo,
 	msgRepo IMessageRepo, msgSaver IMessageSaver,
 ) *Chat {
 	return &Chat{

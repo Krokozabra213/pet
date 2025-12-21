@@ -40,7 +40,7 @@ func (handler *ImageMessageHandler) CanHandle(message *chat.ClientMessage) bool 
 
 func (handler *ImageMessageHandler) Handle(msg *chat.ClientMessage) error {
 	imgMsg := msg.Type.(*chat.ClientMessage_ImageMessage)
-	message := chatdomain.NewMessage(handler.Username, handler.UserID)
+	message := chatdomain.NewMessage(handler.Username, handler.UserID, ImageType)
 	image := chatdomain.NewImage(imgMsg.ImageMessage.GetImageUrl())
 	imageMessage := chatdomain.NewImageMessage(message, image)
 	return handler.Business.SendImageMessage(handler.Ctx, imageMessage)

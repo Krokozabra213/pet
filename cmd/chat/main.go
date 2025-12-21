@@ -1,35 +1,40 @@
 package main
 
 import (
-	"encoding/json"
+	"fmt"
 	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
 
-	"github.com/Krokozabra213/sso/configs/chatconfig"
 	"github.com/Krokozabra213/sso/internal/chat/app"
+	chatnewconfig "github.com/Krokozabra213/sso/newconfigs/chat"
 	"github.com/Krokozabra213/sso/pkg/logger"
 )
 
 const (
 	EnvLocal = "local"
 	EnvProd  = "prod"
-	EnvDev   = "dev"
 )
 
 func main() {
 	env := EnvLocal
-	test := true
+	var configfile string
 
-	log := logger.SetupLogger(env)
-	cfg := chatconfig.Load(env, test)
+	switch env {
+	case EnvLocal:
+		configfile = "settings/chat_main.yml"
+	case EnvProd:
+		configfile = "settings/chat_prod.yml"
+	}
 
-	cfgJSON, err := json.MarshalIndent(cfg, "", "  ")
+	cfg, err := chatnewconfig.Init(configfile, "chat.env")
 	if err != nil {
 		panic(err)
 	}
-	log.Info("loaded config", slog.String("config", string(cfgJSON)))
+	fmt.Printf("%+v\n", cfg)
+
+	log := logger.SetupLogger(env)
 
 	appBuilder := app.NewAppBuilder(cfg, log)
 	appFactory := app.NewAppFactory(appBuilder)

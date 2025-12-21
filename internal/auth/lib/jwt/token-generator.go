@@ -54,7 +54,6 @@ func New(
 	accessTTL time.Duration, refreshTTL time.Duration,
 	keyManager IKeyManager,
 ) *TokenGenerator {
-
 	return &TokenGenerator{
 		user:       user,
 		app:        app,

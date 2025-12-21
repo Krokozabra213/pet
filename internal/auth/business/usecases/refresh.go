@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"log/slog"
-	"time"
 
 	authBusiness "github.com/Krokozabra213/sso/internal/auth/business"
 	"github.com/Krokozabra213/sso/internal/auth/domain"
@@ -29,7 +28,7 @@ func (a *Auth) Refresh(
 	log.Info("starting refresh token process")
 
 	// хешируем токен для безопасного хранения в базе
-	hashToken := hmac.HashJWTTokenHMAC(refreshToken, a.cfg.Security.Secret)
+	hashToken := hmac.HashJWTTokenHMAC(refreshToken, a.cfg.Auth.AppSecretKey)
 
 	exist, err := a.tokenRepo.CheckToken(ctx, hashToken)
 	if err != nil {
@@ -78,8 +77,8 @@ func (a *Auth) Refresh(
 
 	// генерируем новую пару токенов
 	tokenGen := jwt.New(
-		user, app, time.Duration(a.cfg.Security.AccessTokenTTL),
-		time.Duration(a.cfg.Security.RefreshTokenTTL), a.keyManager,
+		user, app, a.cfg.Auth.JWT.AccessTokenTTL,
+		a.cfg.Auth.JWT.RefreshTokenTTL, a.keyManager,
 	)
 
 	tokenPair, err := tokenGen.GenerateTokenPair()

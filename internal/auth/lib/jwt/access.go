@@ -25,7 +25,7 @@ func (gen *TokenGenerator) accessClaims(claims jwt.MapClaims) {
 	claims[AppID] = gen.app.ID
 	claims[UserID] = gen.user.ID
 	claims[Username] = gen.user.Username
-	claims[ExpiredAt] = time.Now().Add(gen.accessTTL * time.Second).Unix()
+	claims[ExpiredAt] = time.Now().Add(gen.accessTTL).Unix()
 }
 
 // Access jwt parser

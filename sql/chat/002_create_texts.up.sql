@@ -1,0 +1,12 @@
+
+CREATE TABLE IF NOT EXISTS texts (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  message_id BIGINT NOT NULL,
+  content VARCHAR(256) NOT NULL,
+
+  CONSTRAINT fk_text_message 
+      FOREIGN KEY (message_id) 
+      REFERENCES messages(id)
+      ON UPDATE CASCADE
+      ON DELETE CASCADE
+);

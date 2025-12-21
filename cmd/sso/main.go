@@ -1,45 +1,49 @@
 package main
 
 import (
-	"encoding/json"
+	"fmt"
 	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
 
-	"github.com/Krokozabra213/sso/configs/ssoconfig"
 	"github.com/Krokozabra213/sso/internal/auth/app"
 	apphttp "github.com/Krokozabra213/sso/internal/auth/app/http"
+	ssonewconfig "github.com/Krokozabra213/sso/newconfigs/sso"
 	"github.com/Krokozabra213/sso/pkg/logger"
 )
 
 const (
 	EnvLocal = "local"
 	EnvProd  = "prod"
-	EnvDev   = "dev"
 )
 
 func main() {
-	test := true
 	env := EnvLocal
+	var configfile string
 
-	log := logger.SetupLogger(env)
-	cfg := ssoconfig.Load(env, test)
+	switch env {
+	case EnvLocal:
+		configfile = "settings/sso_main.yml"
+	case EnvProd:
+		configfile = "settings/sso_prod.yml"
+	}
 
-	cfgJSON, err := json.MarshalIndent(cfg, "", "  ")
+	cfg, err := ssonewconfig.Init(configfile, "sso.env")
 	if err != nil {
 		panic(err)
 	}
-	log.Info("loaded config", slog.String("config", string(cfgJSON)))
+	fmt.Printf("%+v\n", cfg)
+
+	log := logger.SetupLogger(env)
 
 	builder := app.NewAppBuilder(cfg, log)
 	appFactory := app.NewAppFactory(builder)
 	grpcApplication := appFactory.Create()
 	go grpcApplication.MustRun()
 
-	httpapp := apphttp.New(log, cfg.Server.HttpHost, cfg.Server.HttpPort, cfg.Server.Host, cfg.Server.Port)
-	// go httpapp.MustRun()
-	go httpapp.RunHTTP()
+	httpapp := apphttp.New(log, cfg.HTTP.Host, cfg.HTTP.Port, cfg.GRPC.Host, cfg.GRPC.Port)
+	go httpapp.MustRun()
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)

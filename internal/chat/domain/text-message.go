@@ -1,14 +1,11 @@
 package chatdomain
 
 import (
-	"time"
-
 	"github.com/Krokozabra213/protos/gen/go/chat"
 )
 
 type ITextMessage interface {
-	GetTimestamp() time.Time
-	IServerMessage
+	// IServerMessage
 	IConvertServerMessage
 }
 
@@ -24,42 +21,26 @@ func NewTextMessage(message *Message, text *Text) *TextMessage {
 	}
 }
 
-func (tm *TextMessage) GetMessage() *Message {
-	return tm.message
+func (t *TextMessage) GetMessage() *Message {
+	return t.message
 }
 
-func (tm *TextMessage) GetText() *Text {
-	return tm.text
+func (t *TextMessage) GetText() *Text {
+	return t.text
 }
 
-func (tm *TextMessage) GetUserID() int64 {
-	return tm.message.GetUserID()
-}
+func (t *TextMessage) ConvertToServerMessage() *chat.ServerMessage {
 
-func (tm *TextMessage) GetUsername() string {
-	return tm.message.GetUsername()
-}
-
-func (tm *TextMessage) GetTimestamp() time.Time {
-	return tm.message.GetTimestamp()
-}
-
-func (tm *TextMessage) GetContent() string {
-	return tm.text.GetContent()
-}
-
-func (tm *TextMessage) ConvertToServerMessage() *chat.ServerMessage {
-
-	timestamp := tm.GetTimestamp()
+	timestamp := t.message.GetCreatedAt()
 	protoTimestamp := timeToProto(timestamp)
 
 	return &chat.ServerMessage{
 		Type: &chat.ServerMessage_SendMessage{SendMessage: &chat.ChatMessage{
 			Message: &chat.Message{
-				UserId:    tm.GetUserID(),
+				UserId:    t.message.GetUserID(),
 				Timestamp: protoTimestamp,
 			},
-			Content: tm.GetContent(),
+			Content: t.text.GetContent(),
 		}},
 	}
 }
