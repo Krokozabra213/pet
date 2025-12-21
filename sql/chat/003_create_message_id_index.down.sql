@@ -1,0 +1,1 @@
+DROP INDEX IF EXISTS idx_text_message_id;

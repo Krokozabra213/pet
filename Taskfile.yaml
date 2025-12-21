@@ -10,16 +10,24 @@ tasks:
     deps: [docker-chat]
     desc: "migrations for chat service"
     cmds:
-      - go run cmd/migrations-chat/main.go -host=localhost -user=user_chat -password=password_chat -dbname=postgres_chat -port=5600 -sslmode=disable
+      - go run cmd/migrations-chat/main.go
 
   docker-chat:
     desc: "docker compose up for chat service (detached mode)"
     cmds:
-      - docker compose -f docker-compose.chat.yml -d up postgres
+      - docker compose -f docker-compose.chat.yml up -d --remove-orphans postgres
   docker-auth:
     desc: "docker compose up for auth service (detached mode)"
     cmds:
-      - docker compose -f docker-compose.sso.yml up -d postgres redis redis-commander
+      - docker compose -f docker-compose.sso.yml up -d --remove-orphans postgres redis redis-commander adminer
+  in-docker-auth:
+    desc: "docker compose up for up sso service in docker "
+    cmds:
+      - docker compose -f docker-compose.sso.yml up -d --remove-orphans sso
+  in-docker-chat:
+    desc: "docker compose up for up chat service in docker "
+    cmds:
+      - docker compose -f docker-compose.chat.yml up -d --remove-orphans chat
 
   run-auth:
     deps: [migrate-auth]

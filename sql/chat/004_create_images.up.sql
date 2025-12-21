@@ -1,0 +1,12 @@
+
+CREATE TABLE IF NOT EXISTS images (
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  message_id BIGINT NOT NULL,
+  image_url VARCHAR(256) NOT NULL,
+
+  CONSTRAINT fk_image_message 
+      FOREIGN KEY (message_id) 
+      REFERENCES messages(id)
+      ON UPDATE CASCADE
+      ON DELETE CASCADE
+);

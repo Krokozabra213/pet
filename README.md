@@ -1,3 +1,52 @@
+[Backend Application]
+
+## Build & Run (Locally)
+### Prerequisites
+- go 1.24
+- docker & docker-compose
+
+To work with JWT tokens, you need to create a private RSA key and store it in ./secrets/private.pem.
+
+Create sso.env file in root directory and add following values ​​to it to run:
+```dotenv
+
+DSN=host=0.0.0.0 user=user password=password dbname=postgres port=5555 sslmode=disable    // for run in local
+REDIS_ADDR=0.0.0.0:6379
+DSN=host=postgres user=user password=password dbname=postgres port=5432 sslmode=disable   // for run in docker
+REDIS_ADDR=redis:6379
+REDIS_PASS=redis_password
+REDIS_CACHE=0
+APP_SECRET=your-very-long-and-secure-secret-key-here-256-bit
+
+PG_USER=user
+PG_PASSWORD=password
+PG_DB=postgres
+REDIS_PASSWORD=redis_password
+```
+
+Use command 'task in-docker-auth' to build&run sso service in docker, or 'task run-auth'.
+
+
+Create chat.env file in root directory and add following values ​​to it to run:
+```dotenv
+
+DSN="host=localhost user=user password=password dbname=postgres port=5600 sslmode=disable" // for run in local
+DSN=host=postgres user=user password=password dbname=postgres port=5600 sslmode=disable    // for run in docker
+APP_SECRET=your-very-long-and-secure-secret-key-here-256-bit
+REDIS_ADDR="localhost:6379"
+REDIS_PASS="redis_password"
+REDIS_CACHE=3
+
+PG_USER=user
+PG_PASSWORD=password
+PG_DB=postgres
+```
+
+Use command 'task in-docker-chat' to build&run chat service in docker, or 'task run-chat'.
+
+
+
+
 ![Схема](scheme.jpg)
 
 # Архитектура проекта
@@ -43,24 +92,3 @@
 
 ### Чат-сессия
 Пользователи подключаются к эндпоинту /myapp-chat, устанавливающему постоянное WebSocket-соединение для отправки сообщений и уведомлений.
-
-
-
-Для работы с JWT-токенами необходимо создать приватный ключ формата **RSA**. Это делается следующим образом:
-
-### Шаг 1. Проверка наличия OpenSSL
-
-Проверьте наличие установленной утилиты `openSSL`. Используйте команду:
-
-openssl version
-
-Если команда возвращает версию программы, значит всё установлено правильно. Если же появляется сообщение типа "command not found", установите её вручную:
-
-- Скачать последнюю версию OpenSSL можно отсюда:
-
-https://slproweb.com/products/Win32OpenSSL.html или воспользуйтесь менеджером пакетов Chocolatey: bashchoco install openssl
-
-### Шаг 2. Генерация ключа 
-Переходим в корень вашего проекта и открываем каталог secrets. Далее вводим команду для генерации закрытого ключа длиной 2048 бит: bashopenssl genpkey -algorithm RSA -out private.pem -pkeyopt rsa_keygen_bits:2048Это создаст файл private.pem, содержащий ваш приватный ключ. Этот ключ должен храниться в секретном месте и использоваться исключительно для подписи JWT-токенов.
----
-Теперь у вас есть готовый закрытый ключ для работы с JWT-аутентификацией.

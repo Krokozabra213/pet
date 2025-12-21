@@ -1,14 +1,12 @@
 package chatdomain
 
 import (
-	"time"
-
 	"github.com/Krokozabra213/protos/gen/go/chat"
 )
 
 type IImageMessage interface {
-	GetImageUrl() string
-	IServerMessage
+	// GetImageUrl() string
+	// IServerMessage
 	IConvertServerMessage
 }
 
@@ -24,42 +22,26 @@ func NewImageMessage(message *Message, image *Image) *ImageMessage {
 	}
 }
 
-func (im *ImageMessage) GetMessage() *Message {
-	return im.message
+func (i *ImageMessage) GetMessage() *Message {
+	return i.message
 }
 
-func (im *ImageMessage) GetImage() *Image {
-	return im.image
+func (i *ImageMessage) GetImage() *Image {
+	return i.image
 }
 
-func (im *ImageMessage) GetUserID() int64 {
-	return im.message.GetUserID()
-}
+func (i *ImageMessage) ConvertToServerMessage() *chat.ServerMessage {
 
-func (im *ImageMessage) GetUsername() string {
-	return im.message.GetUsername()
-}
-
-func (im *ImageMessage) GetTimestamp() time.Time {
-	return im.message.GetTimestamp()
-}
-
-func (im *ImageMessage) GetImageUrl() string {
-	return im.image.GetImageUrl()
-}
-
-func (im *ImageMessage) ConvertToServerMessage() *chat.ServerMessage {
-
-	timestamp := im.GetTimestamp()
+	timestamp := i.message.GetCreatedAt()
 	protoTimestamp := timeToProto(timestamp)
 
 	return &chat.ServerMessage{
 		Type: &chat.ServerMessage_ImgMessage{ImgMessage: &chat.ImgMessage{
 			Message: &chat.Message{
-				UserId:    im.GetUserID(),
+				UserId:    i.message.GetUserID(),
 				Timestamp: protoTimestamp,
 			},
-			ImageUrl: im.GetImageUrl(),
+			ImageUrl: i.image.GetImageUrl(),
 		}},
 	}
 }

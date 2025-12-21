@@ -40,7 +40,7 @@ func (handler *TextMessageHandler) CanHandle(message *chat.ClientMessage) bool {
 
 func (handler *TextMessageHandler) Handle(msg *chat.ClientMessage) error {
 	textMsg := msg.Type.(*chat.ClientMessage_SendMessage)
-	message := chatdomain.NewMessage(handler.Username, handler.UserID)
+	message := chatdomain.NewMessage(handler.Username, handler.UserID, TextType)
 	text := chatdomain.NewText(textMsg.SendMessage.GetContent())
 	textMessage := chatdomain.NewTextMessage(message, text)
 	return handler.Business.SendTextMessage(handler.Ctx, textMessage)

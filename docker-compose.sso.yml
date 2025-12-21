@@ -7,49 +7,79 @@ services:
     container_name: sso-backend
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.sso
     ports:
-      - 44044:44044
-      - 8090:8090
+      - "0.0.0.0:44044:44044"
+      - "0.0.0.0:8090:8090"
+    volumes:
+      - ./settings:/app/settings
+      - ./secrets:/app/secrets:ro 
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-    
+      redis-commander:
+        condition: service_healthy
+    networks:
+      - app-network
 
   postgres:
     container_name: postgres_sso_go
     image: postgres:16.4
-    environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: postgres
-      
+    env_file:
+      - sso.env
     volumes:
       - postgres-data:/var/lib/postgresql/data
     ports:
       - "0.0.0.0:5555:5432"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d postgres"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 10
-  
+    networks:
+      - app-network
+
+  adminer:
+    image: adminer
+    container_name: adminer
+    env_file:
+      - sso.env        
+    ports:
+      - "0.0.0.0:8100:8080"  
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - ADMINER_DEFAULT_SERVER=postgres    
+      - ADMINER_DEFAULT_USERNAME=$${PG_USER}
+      - ADMINER_DEFAULT_PASSWORD=$${PG_PASSWORD}
+      - ADMINER_DEFAULT_DATABASE=$${PG_DB}
+      - ADMINER_DESIGN=pepa
+    restart: unless-stopped
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
   redis:
     container_name: redis_cache
     image: redis:7.4
-    environment:
-    - REDIS_PASSWORD=redis_password
+    env_file:
+      - sso.env
     volumes:
       - redis-data:/data
     ports:
       - "0.0.0.0:6379:6379"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "redis_password", "ping"]
+      test: ["CMD", "redis-cli", "-a", "$${REDIS_PASSWORD}", "ping"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -59,15 +89,22 @@ services:
   redis-commander:
     image: rediscommander/redis-commander:latest
     container_name: redis_commander
+    env_file:
+      - sso.env
     ports:
-      - "8081:8081"
+      - "0.0.0.0:8081:8081"
     environment:
       - REDIS_HOSTS=local:redis:6379
-      - REDIS_PASSWORD=redis_password
     depends_on:
       redis:
         condition: service_healthy
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8081/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
     networks:
       - app-network
 

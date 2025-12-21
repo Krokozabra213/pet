@@ -34,6 +34,8 @@ func New(t *testing.T) (context.Context, *SSOSuite) {
 	t.Helper()
 
 	cfg, err := ssonewconfig.Init("settings/sso_main.yml", "sso.env")
+	cfg.PG.DSN = "host=0.0.0.0 user=user password=password dbname=postgres port=5555 sslmode=disable"
+	cfg.Redis.Addr = "0.0.0.0:6379"
 	if err != nil {
 		t.Fatalf("config init err: %v", err)
 	}

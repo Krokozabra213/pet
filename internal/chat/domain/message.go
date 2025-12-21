@@ -6,26 +6,37 @@ import (
 	"gorm.io/gorm"
 )
 
-type IMessage interface {
-	GetUserID() int64
-	GetUsername() string
-	GetTimestamp() int64
-}
+// type IMessage interface {
+// 	GetUserID() int64
+// 	GetUsername() string
+// 	GetCreatedAt() time.Time
+// 	GetType() uint8
+// 	GetID() uint64
+// }
 
 type Message struct {
-	ID        uint64         `gorm:"primarykey;column:id"`
+	ID        uint64         `gorm:"column:id"`
 	UserID    int64          `gorm:"column:user_id"`
 	Username  string         `gorm:"-"`
-	Type      string         `gorm:"column:type"`
-	Timestamp time.Time      `gorm:"type:timestamptz;default:CURRENT_TIMESTAMP;column:timestamp"`
+	Type      uint8          `gorm:"column:type"`
+	CreatedAt time.Time      `gorm:"column:created_at"`
 	DeletedAt gorm.DeletedAt `gorm:"column:deleted_at"`
 }
 
-func NewMessage(username string, userID int64) *Message {
+func NewMessage(username string, userID int64, msgType uint8) *Message {
 	return &Message{
 		UserID:   userID,
 		Username: username,
+		Type:     msgType,
 	}
+}
+
+func (m *Message) TableName() string {
+	return "messages"
+}
+
+func (m *Message) GetID() uint64 {
+	return m.ID
 }
 
 func (m *Message) GetUserID() int64 {
@@ -36,10 +47,10 @@ func (m *Message) GetUsername() string {
 	return m.Username
 }
 
-func (m *Message) GetType() string {
+func (m *Message) GetType() uint8 {
 	return m.Type
 }
 
-func (m *Message) GetTimestamp() time.Time {
-	return m.Timestamp
+func (m *Message) GetCreatedAt() time.Time {
+	return m.CreatedAt
 }

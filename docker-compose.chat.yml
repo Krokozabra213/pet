@@ -1,15 +1,43 @@
 services:
-  postgres:
-    container_name: postgres_chat_go
-    image: postgres:16.4
-    environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: postgres
-      PGDATA: /data/postgres/chat
-    command: postgres -p 5600  # Запуск с другим портом внутри контейнера
+
+  chat:
+    image: chat-backend
+    container_name: chat-backend
+    build:
+      context: .
+      dockerfile: Dockerfile.chat
+    ports:
+      - "0.0.0.0:44045:44045"
     volumes:
-      - ./postgres-data/chat:/data/postgres/chat
+      - ./settings:/app/settings
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - chat-network
+
+  postgres:
+    container_name: postgres_chat
+    image: postgres:16.4
+    env_file:
+      - chat.env
+    command: postgres -p 5600
+    volumes:
+      - postgres-data-chat:/var/lib/postgresql/data
     ports:
       - "0.0.0.0:5600:5600"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB} -p 5600"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - chat-network
+
+volumes:
+  postgres-data-chat:
+
+networks:
+  chat-network:
+    driver: bridge

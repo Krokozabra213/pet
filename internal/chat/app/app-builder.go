@@ -4,23 +4,23 @@ import (
 	"log/slog"
 
 	"github.com/Krokozabra213/protos/gen/go/chat"
-	"github.com/Krokozabra213/sso/configs/chatconfig"
 	appgrpc "github.com/Krokozabra213/sso/internal/chat/app/grpc"
 	chatusecases "github.com/Krokozabra213/sso/internal/chat/business/usecases"
 	chatgrpc "github.com/Krokozabra213/sso/internal/chat/grpc"
 	chatinterfaces "github.com/Krokozabra213/sso/internal/chat/grpc/interfaces"
 	"github.com/Krokozabra213/sso/internal/chat/repository/broker"
 	postgresrepo "github.com/Krokozabra213/sso/internal/chat/repository/storage/postgres-repo"
+	chatnewconfig "github.com/Krokozabra213/sso/newconfigs/chat"
 	custombroker "github.com/Krokozabra213/sso/pkg/custom-broker"
 	postgrespet "github.com/Krokozabra213/sso/pkg/db/postgres-pet"
 )
 
 type ChatAppBuilder struct {
-	cfg *chatconfig.Config
+	cfg *chatnewconfig.Config
 	log *slog.Logger
 }
 
-func NewAppBuilder(cfg *chatconfig.Config, log *slog.Logger) *ChatAppBuilder {
+func NewAppBuilder(cfg *chatnewconfig.Config, log *slog.Logger) *ChatAppBuilder {
 	return &ChatAppBuilder{
 		cfg: cfg,
 		log: log,
@@ -39,7 +39,7 @@ func (builder *ChatAppBuilder) BrokerConn() *custombroker.CBroker {
 }
 
 func (builder *ChatAppBuilder) PGConn() *postgrespet.PGDB {
-	return postgrespet.NewPGDB(builder.cfg.DB.DSN)
+	return postgrespet.NewPGDB(builder.cfg.PG.DSN)
 }
 
 // repositories
@@ -74,5 +74,5 @@ func (builder *ChatAppBuilder) Handler(business chatinterfaces.IBusiness) chat.C
 }
 
 func (builder *ChatAppBuilder) BuildGRPCApp(handler chat.ChatServer) *appgrpc.App {
-	return appgrpc.New(builder.log, builder.cfg.Server.Host, builder.cfg.Server.Port, handler)
+	return appgrpc.New(builder.log, builder.cfg.GRPC.Host, builder.cfg.GRPC.Port, handler)
 }

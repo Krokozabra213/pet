@@ -1,7 +1,6 @@
-package ssonewconfig
+package chatnewconfig
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -14,63 +13,43 @@ import (
 )
 
 const (
-	defaultHttpHost               = "localhost"
-	defaultHttpPort               = "44044"
-	defaultHttpRWTimeout          = 10 * time.Second
-	defaultHttpMaxHeaderMegabytes = 1
 	defaultGRPCHost               = "localhost"
-	defaultGRPCPort               = "8000"
+	defaultGRPCPort               = "44045"
 	defaultGRPCRWTimeout          = 10 * time.Second
 	defaultGRPCMaxHeaderMegabytes = 1
 	defaultLoggerLevel            = 0
-	defaultAccessTokenTTL         = 15 * time.Minute
-	defaultRefreshTokenTTL        = 24 * time.Hour * 30
-	defaultPrivateKeyPath         = "./secrets/private.pem"
 )
 
 type (
-	AuthConfig struct {
-		JWT          JWTConfig
-		AppSecretKey []byte
-	}
-
-	JWTConfig struct {
-		AccessTokenTTL  time.Duration `mapstructure:"accessTokenTTL"`
-		RefreshTokenTTL time.Duration `mapstructure:"refreshTokenTTL"`
-		PrivateKey      []byte
-	}
 	Logger struct {
 		Level int `mapstructure:"level"`
+	}
+
+	Security struct {
+		AppSecretKey []byte
 	}
 )
 
 type Config struct {
-	Auth   AuthConfig
-	Logger Logger
-	PG     newconfigs.Postgres
-	Redis  newconfigs.Redis
-	HTTP   newconfigs.HTTPConfig
-	GRPC   newconfigs.GRPCConfig
+	Logger   Logger
+	PG       newconfigs.Postgres
+	Redis    newconfigs.Redis
+	GRPC     newconfigs.GRPCConfig
+	Security Security
 }
 
 func newCfg() Config {
 	cfg := Config{
-		Auth:   AuthConfig{},
-		Logger: Logger{},
-		PG:     newconfigs.Postgres{},
-		Redis:  newconfigs.Redis{},
-		HTTP:   newconfigs.HTTPConfig{},
-		GRPC:   newconfigs.GRPCConfig{},
+		Logger:   Logger{},
+		PG:       newconfigs.Postgres{},
+		Redis:    newconfigs.Redis{},
+		GRPC:     newconfigs.GRPCConfig{},
+		Security: Security{},
 	}
 	return cfg
 }
 
 func populateDefault() {
-	viper.SetDefault("http.host", defaultHttpHost)
-	viper.SetDefault("http.port", defaultHttpPort)
-	viper.SetDefault("http.maxHeaderMegabytes", defaultHttpMaxHeaderMegabytes)
-	viper.SetDefault("http.readTimeout", defaultHttpRWTimeout)
-	viper.SetDefault("http.writeTimeout", defaultHttpRWTimeout)
 
 	viper.SetDefault("grpc.host", defaultGRPCHost)
 	viper.SetDefault("grpc.port", defaultGRPCPort)
@@ -79,22 +58,6 @@ func populateDefault() {
 	viper.SetDefault("grpc.writeTimeout", defaultGRPCRWTimeout)
 
 	viper.SetDefault("logger.level", defaultLoggerLevel)
-
-	viper.SetDefault("auth.accessTokenTTL", defaultAccessTokenTTL)
-	viper.SetDefault("auth.refreshTokenTTL", defaultRefreshTokenTTL)
-	viper.SetDefault("auth.privateKeyPath", defaultPrivateKeyPath)
-}
-
-func PrivateKeyData(keyPath string) ([]byte, error) {
-	if keyPath == "" {
-		return []byte(nil), errors.New("absent private key path on env file")
-	}
-	keyData, err := os.ReadFile(keyPath)
-	if err != nil {
-		return []byte(nil), fmt.Errorf("failed to read private key file: %v", err)
-	}
-
-	return keyData, nil
 }
 
 func parseConfigFile(configPath string) error {
@@ -138,9 +101,6 @@ func Init(configfile, envfile string) (*Config, error) {
 }
 
 func unmarshal(cfg *Config, root string) error {
-	if err := viper.UnmarshalKey("http", &cfg.HTTP); err != nil {
-		return err
-	}
 
 	if err := viper.UnmarshalKey("grpc", &cfg.GRPC); err != nil {
 		return err
@@ -149,18 +109,6 @@ func unmarshal(cfg *Config, root string) error {
 	if err := viper.UnmarshalKey("logger", &cfg.Logger); err != nil {
 		return err
 	}
-
-	if err := viper.UnmarshalKey("auth", &cfg.Auth.JWT); err != nil {
-		return err
-	}
-
-	keyPath := viper.GetString("auth.privateKeyPath")
-	keyPath = filepath.Join(root, keyPath)
-	data, err := PrivateKeyData(keyPath)
-	if err != nil {
-		return err
-	}
-	cfg.Auth.JWT.PrivateKey = data
 
 	return nil
 }
@@ -173,7 +121,7 @@ func setFromEnv(envpath string, cfg *Config) error {
 
 	cfg.PG.DSN = os.Getenv("DSN")
 
-	cfg.Auth.AppSecretKey = []byte(os.Getenv("APP_SECRET"))
+	cfg.Security.AppSecretKey = []byte(os.Getenv("APP_SECRET"))
 	cfg.Redis.Addr = os.Getenv("REDIS_ADDR")
 	cfg.Redis.Pass = os.Getenv("REDIS_PASS")
 

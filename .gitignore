@@ -1,4 +1,5 @@
-.env
+*.env
 **/postgres-data
 **/postgres-data-test
 **/redis-data
+*.log
