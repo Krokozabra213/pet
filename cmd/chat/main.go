@@ -34,9 +34,10 @@ func main() {
 	}
 	fmt.Printf("%+v\n", cfg)
 
-	log := logger.SetupLogger(env)
+	// log := logger.SetupLogger(env)
+	logger.Init(env)
 
-	appBuilder := app.NewAppBuilder(cfg, log)
+	appBuilder := app.NewAppBuilder(cfg)
 	appFactory := app.NewAppFactory(appBuilder)
 	application := appFactory.Create()
 	go application.MustRun()
@@ -44,9 +45,9 @@ func main() {
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
 	sign := <-stop
-	log.Info("stopping application", slog.String("signal", sign.String()))
+	slog.Info("stopping application", slog.String("signal", sign.String()))
 
 	application.Stop()
 
-	log.Info("application stopped")
+	slog.Info("application stopped")
 }

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/Krokozabra213/protos/gen/go/chat"
-	"github.com/Krokozabra213/sso/internal/chat/domain"
+	chatdomain "github.com/Krokozabra213/sso/internal/chat/domain"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -25,7 +25,6 @@ type IMessager interface {
 }
 
 type SendToClientHandler struct {
-	// TODO: ADD LOGGER
 	Log      *slog.Logger
 	Messager IMessager
 	Sender   IMessageSender
@@ -33,10 +32,10 @@ type SendToClientHandler struct {
 
 func New(
 	stream chat.Chat_ChatStreamServer, buffer <-chan interface{},
-	shutdown <-chan struct{}, log *slog.Logger,
+	shutdown <-chan struct{},
 ) *SendToClientHandler {
 	op := "chat.Handler.SendToClient"
-	log = log.With(
+	log := slog.With(
 		slog.String("op", op),
 	)
 
