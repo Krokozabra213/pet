@@ -3,7 +3,6 @@ package authusecases
 import (
 	"context"
 	"crypto/rsa"
-	"log/slog"
 	"time"
 
 	"github.com/Krokozabra213/sso/internal/auth/domain"
@@ -34,7 +33,6 @@ type IKeyManager interface {
 }
 
 type Auth struct {
-	log          *slog.Logger
 	cfg          *ssonewconfig.Config
 	tokenRepo    ITokenProvider
 	userProvider IUserProvider
@@ -43,12 +41,12 @@ type Auth struct {
 }
 
 func New(
-	log *slog.Logger, cfg *ssonewconfig.Config,
+	cfg *ssonewconfig.Config,
 	userProvider IUserProvider, appProvider IAppProvider,
 	tokenRepo ITokenProvider, keyManager IKeyManager,
 ) authgrpc.IBusiness {
 	return &Auth{
-		log:          log,
+
 		cfg:          cfg,
 		userProvider: userProvider,
 		appProvider:  appProvider,

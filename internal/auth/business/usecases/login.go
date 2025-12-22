@@ -23,7 +23,7 @@ func (a *Auth) Login(
 	password := input.GetPassword()
 	appID := input.GetAppID()
 
-	log := a.log.With(
+	log := slog.With(
 		slog.String("op", op),
 		slog.String("username", username),
 		slog.Int("app_id", appID),

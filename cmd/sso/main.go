@@ -35,22 +35,23 @@ func main() {
 	}
 	fmt.Printf("%+v\n", cfg)
 
-	log := logger.SetupLogger(env)
+	// log := logger.SetupLogger(env)
+	logger.Init(env)
 
-	builder := app.NewAppBuilder(cfg, log)
+	builder := app.NewAppBuilder(cfg)
 	appFactory := app.NewAppFactory(builder)
 	grpcApplication := appFactory.Create()
 	go grpcApplication.MustRun()
 
-	httpapp := apphttp.New(log, cfg.HTTP.Host, cfg.HTTP.Port, cfg.GRPC.Host, cfg.GRPC.Port)
+	httpapp := apphttp.New(cfg.HTTP.Host, cfg.HTTP.Port, cfg.GRPC.Host, cfg.GRPC.Port)
 	go httpapp.MustRun()
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
 	sign := <-stop
-	log.Info("stopping application", slog.String("signal", sign.String()))
+	slog.Info("stopping application", slog.String("signal", sign.String()))
 
 	httpapp.Stop()
 	grpcApplication.Stop()
-	log.Info("application stopped")
+	slog.Info("application stopped")
 }

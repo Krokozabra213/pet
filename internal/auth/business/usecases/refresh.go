@@ -21,7 +21,7 @@ func (a *Auth) Refresh(
 
 	refreshToken := input.GetRefreshToken()
 
-	log := a.log.With(
+	log := slog.With(
 		slog.String("op", op),
 		slog.String("token", refreshToken),
 	)

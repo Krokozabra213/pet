@@ -19,7 +19,7 @@ func (a *Auth) PublicKey(
 
 	appID := input.GetAppID()
 
-	log := a.log.With(
+	log := slog.With(
 		slog.String("op", op),
 		slog.Int("app_id", appID),
 	)

@@ -11,13 +11,12 @@ import (
 )
 
 type GRPCApp struct {
-	log        *slog.Logger
 	gRPCServer *grpc.Server
 	host       string
 	port       string
 }
 
-func New(log *slog.Logger, host string, port string, srv sso.AuthServer) *GRPCApp {
+func New(host string, port string, srv sso.AuthServer) *GRPCApp {
 	gRPCServer := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
 			grpc.UnaryServerInterceptor(ValidationUnaryInterceptor),
@@ -29,7 +28,6 @@ func New(log *slog.Logger, host string, port string, srv sso.AuthServer) *GRPCAp
 	reflection.Register(gRPCServer)
 
 	return &GRPCApp{
-		log:        log,
 		gRPCServer: gRPCServer,
 		host:       host,
 		port:       port,
@@ -39,7 +37,7 @@ func New(log *slog.Logger, host string, port string, srv sso.AuthServer) *GRPCAp
 func (a *GRPCApp) RunGRPC() error {
 	const op = "authappgrpc.Run"
 
-	log := a.log.With(
+	log := slog.With(
 		slog.String("op", op),
 		slog.String("host", a.host),
 		slog.String("port", a.port),
@@ -68,7 +66,7 @@ func (a *GRPCApp) MustRun() {
 func (a *GRPCApp) Stop() {
 	const op = "authgrpcapp.Stop"
 
-	a.log.With(slog.String("op", op)).
+	slog.With(slog.String("op", op)).
 		Info("stopping gRPC server", slog.String("address", a.host+a.port))
 
 	a.gRPCServer.GracefulStop()

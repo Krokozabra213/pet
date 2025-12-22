@@ -10,9 +10,9 @@ const (
 	envProd  = "prod"
 )
 
-// func Init (env string) {
-// 	slog.SetDefault()
-// }
+func Init(env string) {
+	slog.SetDefault(SetupLogger(env))
+}
 
 func SetupLogger(env string) *slog.Logger {
 	var log *slog.Logger

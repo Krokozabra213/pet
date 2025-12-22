@@ -21,7 +21,7 @@ func (a *Auth) Logout(
 
 	refreshToken := input.GetRefreshToken()
 
-	log := a.log.With(
+	log := slog.With(
 		slog.String("op", op),
 		slog.String("token", refreshToken),
 	)
