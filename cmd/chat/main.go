@@ -34,7 +34,6 @@ func main() {
 	}
 	fmt.Printf("%+v\n", cfg)
 
-	// log := logger.SetupLogger(env)
 	logger.Init(env)
 
 	appBuilder := app.NewAppBuilder(cfg)

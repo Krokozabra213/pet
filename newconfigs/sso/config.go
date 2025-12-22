@@ -39,28 +39,23 @@ type (
 		RefreshTokenTTL time.Duration `mapstructure:"refreshTokenTTL"`
 		PrivateKey      []byte
 	}
-	Logger struct {
-		Level int `mapstructure:"level"`
-	}
 )
 
 type Config struct {
-	Auth   AuthConfig
-	Logger Logger
-	PG     newconfigs.Postgres
-	Redis  newconfigs.Redis
-	HTTP   newconfigs.HTTPConfig
-	GRPC   newconfigs.GRPCConfig
+	Auth  AuthConfig
+	PG    newconfigs.Postgres
+	Redis newconfigs.Redis
+	HTTP  newconfigs.HTTPConfig
+	GRPC  newconfigs.GRPCConfig
 }
 
 func newCfg() Config {
 	cfg := Config{
-		Auth:   AuthConfig{},
-		Logger: Logger{},
-		PG:     newconfigs.Postgres{},
-		Redis:  newconfigs.Redis{},
-		HTTP:   newconfigs.HTTPConfig{},
-		GRPC:   newconfigs.GRPCConfig{},
+		Auth:  AuthConfig{},
+		PG:    newconfigs.Postgres{},
+		Redis: newconfigs.Redis{},
+		HTTP:  newconfigs.HTTPConfig{},
+		GRPC:  newconfigs.GRPCConfig{},
 	}
 	return cfg
 }
@@ -146,10 +141,6 @@ func unmarshal(cfg *Config, root string) error {
 		return err
 	}
 
-	if err := viper.UnmarshalKey("logger", &cfg.Logger); err != nil {
-		return err
-	}
-
 	if err := viper.UnmarshalKey("auth", &cfg.Auth.JWT); err != nil {
 		return err
 	}
@@ -182,6 +173,12 @@ func setFromEnv(envpath string, cfg *Config) error {
 	if err != nil {
 		return err
 	}
+
+	cfg.PG.User = os.Getenv("PG_USER")
+	cfg.PG.Password = os.Getenv("PG_PASSWORD")
+	cfg.PG.DB = os.Getenv("PG_DB")
+	cfg.PG.LocalPort = os.Getenv("PG_LOCAL_PORT")
+
 	return nil
 }
 

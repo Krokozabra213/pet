@@ -7,39 +7,57 @@
 
 To work with JWT tokens, you need to create a private RSA key and store it in ./secrets/private.pem.
 
-Create sso.env file in root directory and add following values ​​to it to run:
+Create sso.env file in root directory and add following values ​​to it to run in local machine:
 ```dotenv
 
-DSN=host=0.0.0.0 user=user password=password dbname=postgres port=5555 sslmode=disable    // for run in local
+DSN=host=0.0.0.0 user=user password=password dbname=postgres port=5555 sslmode=disable
 REDIS_ADDR=0.0.0.0:6379
-DSN=host=postgres user=user password=password dbname=postgres port=5432 sslmode=disable   // for run in docker
+REDIS_PASS=redis_password
+REDIS_CACHE=0
+APP_SECRET=your-very-long-and-secure-secret-key-here-256-bit
+PG_USER=user
+PG_PASSWORD=password
+PG_DB=postgres
+PG_LOCAL_PORT=5555
+```
+
+Run in docker:
+```dotenv
+
+DSN=host=postgres user=user password=password dbname=postgres port=5432 sslmode=disable
 REDIS_ADDR=redis:6379
 REDIS_PASS=redis_password
 REDIS_CACHE=0
 APP_SECRET=your-very-long-and-secure-secret-key-here-256-bit
-
 PG_USER=user
 PG_PASSWORD=password
 PG_DB=postgres
-REDIS_PASSWORD=redis_password
+PG_LOCAL_PORT=5555
 ```
 
 Use command 'task in-docker-auth' to build&run sso service in docker, or 'task run-auth'.
 
 
-Create chat.env file in root directory and add following values ​​to it to run:
+Create chat.env file in root directory and add following values ​​to it to run in local machine:
 ```dotenv
 
-DSN=host=localhost user=user password=password dbname=postgres port=5600 sslmode=disable // for run in local
-DSN=host=postgres user=user password=password dbname=postgres port=5600 sslmode=disable    // for run in docker
+DSN=host=localhost user=user password=password dbname=postgres port=5600 sslmode=disable
 APP_SECRET=your-very-long-and-secure-secret-key-here-256-bit
-REDIS_ADDR=localhost:6379
-REDIS_PASS=redis_password
-REDIS_CACHE=3
-
 PG_USER=user
 PG_PASSWORD=password
 PG_DB=postgres
+PG_LOCAL_PORT=5600
+```
+
+To run in docker:
+```dotenv
+
+DSN=host=postgres user=user password=password dbname=postgres port=5600 sslmode=disable
+APP_SECRET=your-very-long-and-secure-secret-key-here-256-bit
+PG_USER=user
+PG_PASSWORD=password
+PG_DB=postgres
+PG_LOCAL_PORT=5600
 ```
 
 Use command 'task in-docker-chat' to build&run chat service in docker, or 'task run-chat'.
