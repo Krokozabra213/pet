@@ -91,7 +91,7 @@ func (s *SSOSuite) CleanupTestData() error {
 
 func (s *SSOSuite) CleanupUserData() error {
 	// удаляем все строки в таблице users
-	result := s.DB.Client.Exec("TRUNCATE TABLE users CASCADE")
+	result := s.DB.Exec("TRUNCATE TABLE users CASCADE")
 	if result.Error != nil {
 		return result.Error
 	}
@@ -100,7 +100,7 @@ func (s *SSOSuite) CleanupUserData() error {
 
 func (s *SSOSuite) CleanupAppsData() error {
 	// удаляем все строки в таблице apps
-	result := s.DB.Client.Exec("TRUNCATE TABLE apps CASCADE")
+	result := s.DB.Exec("TRUNCATE TABLE apps CASCADE")
 	if result.Error != nil {
 		return result.Error
 	}
@@ -109,7 +109,7 @@ func (s *SSOSuite) CleanupAppsData() error {
 
 func (s *SSOSuite) CleanupAdminsData() error {
 	// удаляем все строки в таблице admins
-	result := s.DB.Client.Exec("TRUNCATE TABLE admins CASCADE")
+	result := s.DB.Exec("TRUNCATE TABLE admins CASCADE")
 	if result.Error != nil {
 		return result.Error
 	}
@@ -129,7 +129,7 @@ func (s *SSOSuite) CreateApp(name string) (int, error) {
 	app := &domain.App{
 		Name: name,
 	}
-	result := s.DB.Client.Create(app)
+	result := s.DB.Create(app)
 	if result.Error != nil {
 		return 0, result.Error
 	}
@@ -140,7 +140,7 @@ func (s *SSOSuite) CreateAdmin(userID int64) (int64, error) {
 	admin := &domain.Admin{
 		UserID: userID,
 	}
-	result := s.DB.Client.Create(admin)
+	result := s.DB.Create(admin)
 	if result.Error != nil {
 		return 0, result.Error
 	}

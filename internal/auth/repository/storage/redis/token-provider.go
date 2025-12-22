@@ -24,7 +24,7 @@ func (r *Redis) SaveToken(parentCtx context.Context, token string, expiresAt tim
 		return storage.ErrTokenExpired
 	}
 
-	err := r.RDB.Client.SetEx(ctx, token, "", expiration).Err()
+	err := r.RDB.SetEx(ctx, token, "", expiration).Err()
 
 	customErr := redispet.ErrorWrapper(err)
 	if customErr != nil {
@@ -44,7 +44,7 @@ func (r *Redis) CheckToken(parentCtx context.Context, token string) (bool, error
 		return false, storage.CtxError(ctx.Err())
 	}
 
-	exists, err := r.RDB.Client.Exists(ctx, token).Result()
+	exists, err := r.RDB.Exists(ctx, token).Result()
 
 	customErr := redispet.ErrorWrapper(err)
 	if customErr != nil {

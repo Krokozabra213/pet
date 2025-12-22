@@ -1,20 +1,25 @@
 package postgres
 
 import (
+	"context"
 	"time"
 
-	postgrespet "github.com/Krokozabra213/sso/pkg/db/postgres-pet"
+	"gorm.io/gorm"
 )
+
+type IPG interface {
+	WithContext(ctx context.Context) *gorm.DB
+}
 
 const (
 	ctxTimeout = 5 * time.Second
 )
 
 type Postgres struct {
-	DB *postgrespet.PGDB
+	DB IPG
 }
 
-func New(db *postgrespet.PGDB) *Postgres {
+func New(db IPG) *Postgres {
 	return &Postgres{
 		DB: db,
 	}

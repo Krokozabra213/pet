@@ -28,7 +28,7 @@ func (p *Postgres) SaveImageMessage(
 	}
 
 	perform := func() error {
-		return p.DB.Client.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		return p.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 			message := imageMessage.GetMessage()
 
 			if err := tx.Create(message).Error; err != nil {

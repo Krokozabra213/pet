@@ -8,8 +8,11 @@ import (
 const (
 	envLocal = "local"
 	envProd  = "prod"
-	envDev   = "dev"
 )
+
+// func Init (env string) {
+// 	slog.SetDefault()
+// }
 
 func SetupLogger(env string) *slog.Logger {
 	var log *slog.Logger
@@ -18,10 +21,6 @@ func SetupLogger(env string) *slog.Logger {
 	case envLocal:
 		log = slog.New(
 			slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
-		)
-	case envDev:
-		log = slog.New(
-			slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
 		)
 	case envProd:
 		log = slog.New(

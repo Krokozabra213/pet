@@ -5,11 +5,11 @@ import (
 	"os"
 )
 
-const (
-	envLocal = "local"
-	envProd  = "prod"
-	envDev   = "dev"
-)
+// const (
+// 	envLocal = "local"
+// 	envProd  = "prod"
+// 	envDev   = "dev"
+// )
 
 // use lvl=-4 for local lvl=0 for production
 func SetupLogger(lvl int) *slog.Logger {

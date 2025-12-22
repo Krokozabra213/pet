@@ -30,11 +30,11 @@ Use command 'task in-docker-auth' to build&run sso service in docker, or 'task r
 Create chat.env file in root directory and add following values ​​to it to run:
 ```dotenv
 
-DSN="host=localhost user=user password=password dbname=postgres port=5600 sslmode=disable" // for run in local
+DSN=host=localhost user=user password=password dbname=postgres port=5600 sslmode=disable // for run in local
 DSN=host=postgres user=user password=password dbname=postgres port=5600 sslmode=disable    // for run in docker
 APP_SECRET=your-very-long-and-secure-secret-key-here-256-bit
-REDIS_ADDR="localhost:6379"
-REDIS_PASS="redis_password"
+REDIS_ADDR=localhost:6379
+REDIS_PASS=redis_password
 REDIS_CACHE=3
 
 PG_USER=user

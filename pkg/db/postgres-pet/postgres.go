@@ -6,7 +6,7 @@ import (
 )
 
 type PGDB struct {
-	Client *gorm.DB
+	*gorm.DB
 }
 
 func NewPGDB(dsn string) *PGDB {
@@ -14,5 +14,5 @@ func NewPGDB(dsn string) *PGDB {
 	if err != nil {
 		panic(err)
 	}
-	return &PGDB{Client: client}
+	return &PGDB{client}
 }
