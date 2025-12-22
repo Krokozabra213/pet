@@ -20,7 +20,6 @@ const (
 )
 
 type HTTPApp struct {
-	log      *slog.Logger
 	gwServer *http.Server
 	host     string
 	port     string
@@ -29,11 +28,10 @@ type HTTPApp struct {
 }
 
 func New(
-	log *slog.Logger, host string, port string,
+	host string, port string,
 	grpcHost string, grpcPort string,
 ) *HTTPApp {
 	return &HTTPApp{
-		log:      log,
 		host:     host,
 		port:     port,
 		grpcHost: grpcHost,
@@ -44,7 +42,7 @@ func New(
 func (a *HTTPApp) RunHTTP() error {
 	const op = "authapphttp.Run"
 
-	log := a.log.With(
+	log := slog.With(
 		slog.String("op", op),
 		slog.String("host", a.host),
 		slog.String("port", a.port),
@@ -94,7 +92,7 @@ func (a *HTTPApp) MustRun() {
 func (a *HTTPApp) Stop() {
 	const op = "authapphttp.Stop"
 
-	log := a.log.With(
+	log := slog.With(
 		slog.String("op", op),
 		slog.String("host", a.host),
 		slog.String("port", a.port),

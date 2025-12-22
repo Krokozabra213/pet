@@ -12,7 +12,7 @@ import (
 func (a *Chat) Subscribe(ctx context.Context, username string) (chatinterfaces.IChatClient, error) {
 
 	const op = "chat.Subscribe-Business"
-	log := a.log.With(
+	log := slog.With(
 		slog.String("op", op),
 	)
 

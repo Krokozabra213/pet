@@ -20,7 +20,7 @@ func (p *Postgres) SaveUser(
 		return 0, storage.CtxError(ctx.Err())
 	}
 
-	err = p.DB.Client.WithContext(ctx).Create(user).Error
+	err = p.DB.WithContext(ctx).Create(user).Error
 
 	if err != nil {
 		customErr := postgrespet.ErrorWrapper(err)
@@ -43,7 +43,7 @@ func (p *Postgres) User(
 	}
 
 	var user domain.User
-	err := p.DB.Client.WithContext(ctx).First(&user, "username = ?", username).Error
+	err := p.DB.WithContext(ctx).First(&user, "username = ?", username).Error
 	if err != nil {
 		customErr := postgrespet.ErrorWrapper(err)
 		repoErr := ErrorFactory(domain.UserEntity, customErr)
@@ -65,7 +65,7 @@ func (p *Postgres) UserByID(
 	}
 
 	var user domain.User
-	result := p.DB.Client.WithContext(ctx).First(&user, "id = ?", id)
+	result := p.DB.WithContext(ctx).First(&user, "id = ?", id)
 
 	customErr := postgrespet.ErrorWrapper(result.Error)
 	if customErr != nil {
@@ -87,7 +87,7 @@ func (p *Postgres) IsAdmin(
 	}
 
 	var exists bool
-	result := p.DB.Client.WithContext(ctx).Raw(
+	result := p.DB.WithContext(ctx).Raw(
 		"SELECT EXISTS(SELECT 1 FROM admins WHERE user_id = ?)",
 		userID,
 	).Scan(&exists)

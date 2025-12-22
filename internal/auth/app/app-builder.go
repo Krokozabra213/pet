@@ -1,8 +1,6 @@
 package app
 
 import (
-	"log/slog"
-
 	"github.com/Krokozabra213/protos/gen/go/sso"
 	appgrpc "github.com/Krokozabra213/sso/internal/auth/app/grpc"
 	authusecases "github.com/Krokozabra213/sso/internal/auth/business/usecases"
@@ -17,13 +15,11 @@ import (
 
 type AuthAppBuilder struct {
 	cfg *ssonewconfig.Config
-	log *slog.Logger
 }
 
-func NewAppBuilder(cfg *ssonewconfig.Config, log *slog.Logger) *AuthAppBuilder {
+func NewAppBuilder(cfg *ssonewconfig.Config) *AuthAppBuilder {
 	return &AuthAppBuilder{
 		cfg: cfg,
-		log: log,
 	}
 }
 
@@ -62,7 +58,7 @@ func (builder *AuthAppBuilder) Business(
 	tokenRepo authusecases.ITokenProvider, keyManager authusecases.IKeyManager,
 ) authgrpc.IBusiness {
 	return authusecases.New(
-		builder.log, builder.cfg,
+		builder.cfg,
 		userProvider, appProvider, // sqldb
 		tokenRepo, //nosqldb
 		keyManager,
@@ -74,5 +70,5 @@ func (builder *AuthAppBuilder) Handler(business authgrpc.IBusiness) sso.AuthServ
 }
 
 func (builder *AuthAppBuilder) BuildGRPCApp(handler sso.AuthServer) *appgrpc.GRPCApp {
-	return appgrpc.New(builder.log, builder.cfg.GRPC.Host, builder.cfg.GRPC.Port, handler)
+	return appgrpc.New(builder.cfg.GRPC.Host, builder.cfg.GRPC.Port, handler)
 }

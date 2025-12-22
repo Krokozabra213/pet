@@ -19,19 +19,17 @@ const (
 type ServerAPI struct {
 	chat.UnimplementedChatServer
 	Business chatinterfaces.IBusiness
-	Log      *slog.Logger
 }
 
-func New(log *slog.Logger, business chatinterfaces.IBusiness) *ServerAPI {
+func New(business chatinterfaces.IBusiness) *ServerAPI {
 	return &ServerAPI{
 		Business: business,
-		Log:      log,
 	}
 }
 
 func (s *ServerAPI) ChatStream(stream chat.Chat_ChatStreamServer) error {
 	const op = "chat.Handler"
-	log := s.Log.With(
+	log := slog.With(
 		slog.String("op", op),
 	)
 
@@ -67,7 +65,7 @@ func (s *ServerAPI) ChatStream(stream chat.Chat_ChatStreamServer) error {
 
 	// Запускаем отправку сообщений server -> client
 	go func() {
-		messageHandler := sendtoclienthander.New(stream, client.GetBuffer(), client.GetDone(), s.Log)
+		messageHandler := sendtoclienthander.New(stream, client.GetBuffer(), client.GetDone())
 		if err := messageHandler.Run(); err != nil {
 			select {
 			case errCh <- err:
@@ -80,7 +78,7 @@ func (s *ServerAPI) ChatStream(stream chat.Chat_ChatStreamServer) error {
 
 	factory := handlersfactory.New()
 	factory.InitHandlers(s.Business, ctx, userID, username)
-	processor := recvprocessor.New(s.Log, factory)
+	processor := recvprocessor.New(factory)
 
 	// Обрабатываем входящие сообщения от клиента
 	for {
@@ -93,7 +91,7 @@ func (s *ServerAPI) ChatStream(stream chat.Chat_ChatStreamServer) error {
 			clientMsg, err := stream.Recv()
 
 			if err != nil {
-				s.Log.Error("recv message failed", "error", err)
+				log.Error("recv message failed", "error", err)
 				err = ValidateStreamRecvErrors(err)
 				return err
 			}

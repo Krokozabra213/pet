@@ -9,7 +9,7 @@ import (
 
 func (a *Chat) SendTextMessage(ctx context.Context, msg *chatdomain.TextMessage) error {
 	const op = "chat.SendTextMessage-Business"
-	log := a.log.With(
+	log := slog.With(
 		slog.String("op", op),
 	)
 	log.Info("send text message", "msg", msg)

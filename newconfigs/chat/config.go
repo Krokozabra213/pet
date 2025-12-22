@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strconv"
 	"time"
 
 	"github.com/Krokozabra213/sso/newconfigs"
@@ -21,17 +20,12 @@ const (
 )
 
 type (
-	Logger struct {
-		Level int `mapstructure:"level"`
-	}
-
 	Security struct {
 		AppSecretKey []byte
 	}
 )
 
 type Config struct {
-	Logger   Logger
 	PG       newconfigs.Postgres
 	Redis    newconfigs.Redis
 	GRPC     newconfigs.GRPCConfig
@@ -40,7 +34,6 @@ type Config struct {
 
 func newCfg() Config {
 	cfg := Config{
-		Logger:   Logger{},
 		PG:       newconfigs.Postgres{},
 		Redis:    newconfigs.Redis{},
 		GRPC:     newconfigs.GRPCConfig{},
@@ -50,13 +43,11 @@ func newCfg() Config {
 }
 
 func populateDefault() {
-
 	viper.SetDefault("grpc.host", defaultGRPCHost)
 	viper.SetDefault("grpc.port", defaultGRPCPort)
 	viper.SetDefault("grpc.maxHeaderMegabytes", defaultGRPCMaxHeaderMegabytes)
 	viper.SetDefault("grpc.readTimeout", defaultGRPCRWTimeout)
 	viper.SetDefault("grpc.writeTimeout", defaultGRPCRWTimeout)
-
 	viper.SetDefault("logger.level", defaultLoggerLevel)
 }
 
@@ -106,10 +97,6 @@ func unmarshal(cfg *Config, root string) error {
 		return err
 	}
 
-	if err := viper.UnmarshalKey("logger", &cfg.Logger); err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -122,14 +109,19 @@ func setFromEnv(envpath string, cfg *Config) error {
 	cfg.PG.DSN = os.Getenv("DSN")
 
 	cfg.Security.AppSecretKey = []byte(os.Getenv("APP_SECRET"))
-	cfg.Redis.Addr = os.Getenv("REDIS_ADDR")
-	cfg.Redis.Pass = os.Getenv("REDIS_PASS")
+	// cfg.Redis.Addr = os.Getenv("REDIS_ADDR")
+	// cfg.Redis.Pass = os.Getenv("REDIS_PASS")
 
-	cache := os.Getenv("REDIS_CACHE")
-	cfg.Redis.Cache, err = strconv.Atoi(cache)
-	if err != nil {
-		return err
-	}
+	// cache := os.Getenv("REDIS_CACHE")
+	// cfg.Redis.Cache, err = strconv.Atoi(cache)
+	// if err != nil {
+	// 	return err
+	// }
+
+	cfg.PG.User = os.Getenv("PG_USER")
+	cfg.PG.Password = os.Getenv("PG_PASSWORD")
+	cfg.PG.DB = os.Getenv("PG_DB")
+	cfg.PG.LocalPort = os.Getenv("PG_LOCAL_PORT")
 	return nil
 }
 

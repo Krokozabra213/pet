@@ -1,20 +1,26 @@
 package redis
 
 import (
+	"context"
 	"time"
 
-	redispet "github.com/Krokozabra213/sso/pkg/db/redis-pet"
+	"github.com/redis/go-redis/v9"
 )
 
 const (
 	ctxTimeout = 5 * time.Second
 )
 
-type Redis struct {
-	RDB *redispet.RDB
+type IRedis interface {
+	SetEx(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.StatusCmd
+	Exists(ctx context.Context, keys ...string) *redis.IntCmd
 }
 
-func New(RDB *redispet.RDB) *Redis {
+type Redis struct {
+	RDB IRedis
+}
+
+func New(RDB IRedis) *Redis {
 	return &Redis{
 		RDB: RDB,
 	}

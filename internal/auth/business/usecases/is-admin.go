@@ -19,7 +19,7 @@ func (a *Auth) IsAdmin(
 
 	userID := input.GetUserID()
 
-	log := a.log.With(
+	log := slog.With(
 		slog.String("op", op),
 		slog.Int64("user_id", userID),
 	)

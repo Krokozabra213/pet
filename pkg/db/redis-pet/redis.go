@@ -11,7 +11,7 @@ import (
 const ctxTimeout = 5 * time.Second
 
 type RDB struct {
-	Client *redis.Client
+	*redis.Client
 }
 
 func NewRedisDB(addr, password string, db int) *RDB {
@@ -28,7 +28,5 @@ func NewRedisDB(addr, password string, db int) *RDB {
 		panic(fmt.Sprintf("Redis connection failed: %v", err))
 	}
 
-	return &RDB{
-		Client: client,
-	}
+	return &RDB{client}
 }

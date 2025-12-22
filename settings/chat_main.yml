@@ -4,6 +4,3 @@ grpc:
   writeTimeout: 10s
   host: 0.0.0.0
   port: 44045
-
-logger:
-  level: -4

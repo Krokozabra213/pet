@@ -15,7 +15,7 @@ tasks:
   docker-chat:
     desc: "docker compose up for chat service (detached mode)"
     cmds:
-      - docker compose -f docker-compose.chat.yml up -d --remove-orphans postgres
+      - docker compose -f docker-compose.chat.yml up -d --remove-orphans postgres adminer
   docker-auth:
     desc: "docker compose up for auth service (detached mode)"
     cmds:

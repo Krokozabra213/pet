@@ -21,7 +21,7 @@ func (p *Postgres) AppByID(
 	}
 
 	var app domain.App
-	err := p.DB.Client.WithContext(ctx).First(&app, "id = ?", appID).Error
+	err := p.DB.WithContext(ctx).First(&app, "id = ?", appID).Error
 
 	if err != nil {
 		customErr := postgrespet.ErrorWrapper(err)

@@ -11,7 +11,7 @@ import (
 
 func (s *ServerAPI) ValidateJoinMessage(message *chat.ClientMessage) (*chat.ClientMessage_Join, error) {
 	const op = "chat.Handler.validateJoinMessage"
-	log := s.Log.With(
+	log := slog.With(
 		slog.String("op", op),
 	)
 

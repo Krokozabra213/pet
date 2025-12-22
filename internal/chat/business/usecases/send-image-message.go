@@ -9,7 +9,7 @@ import (
 
 func (a *Chat) SendImageMessage(ctx context.Context, msg *chatdomain.ImageMessage) error {
 	const op = "chat.SendImageMessage-Business"
-	log := a.log.With(
+	log := slog.With(
 		slog.String("op", op),
 	)
 	log.Info("send image message", "msg", msg)

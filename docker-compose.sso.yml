@@ -21,6 +21,8 @@ services:
         condition: service_healthy
       redis-commander:
         condition: service_healthy
+      adminer:
+        condition: service_healthy
     networks:
       - app-network
 
@@ -79,7 +81,7 @@ services:
       - "0.0.0.0:6379:6379"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "$${REDIS_PASSWORD}", "ping"]
+      test: ["CMD", "redis-cli", "-a", "$${REDIS_PASS}", "ping"]
       interval: 30s
       timeout: 10s
       retries: 3

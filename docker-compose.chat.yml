@@ -13,6 +13,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      adminer:
+        condition: service_healthy
     networks:
       - chat-network
 
@@ -34,6 +36,32 @@ services:
       retries: 10
     networks:
       - chat-network
+
+  adminer:
+    image: adminer
+    container_name: adminer
+    env_file:
+      - chat.env        
+    ports:
+      - "0.0.0.0:8110:8080"  
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - ADMINER_DEFAULT_SERVER=postgres:5600  
+      - ADMINER_DEFAULT_USERNAME=$${PG_USER}
+      - ADMINER_DEFAULT_PASSWORD=$${PG_PASSWORD}
+      - ADMINER_DEFAULT_DATABASE=$${PG_DB}
+      - ADMINER_DESIGN=pepa
+    restart: unless-stopped
+    networks:
+      - chat-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
 volumes:
   postgres-data-chat:

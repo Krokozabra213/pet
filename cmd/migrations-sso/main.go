@@ -1,20 +1,33 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
+	ssonewconfig "github.com/Krokozabra213/sso/newconfigs/sso"
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
+const (
+	path    = "./sql/sso"
+	envfile = "sso.env"
+	cfgpath = "settings/sso_main.yml"
+)
+
 func main() {
-	migrationsPath := "./sql/sso"
-	dbURL := "postgres://user:password@localhost:5555/postgres?sslmode=disable"
+
+	cfg, err := ssonewconfig.Init(cfgpath, envfile)
+
+	dbURL := fmt.Sprintf(
+		"postgres://%s:%s@localhost:%s/%s?sslmode=disable",
+		cfg.PG.User, cfg.PG.Password, cfg.PG.LocalPort, cfg.PG.DB,
+	)
 
 	m, err := migrate.New(
-		"file://"+migrationsPath, // Путь к папке с миграциями
-		dbURL,                    // Строка подключения к БД
+		"file://"+path, // Путь к папке с миграциями
+		dbURL,          // Строка подключения к БД
 	)
 	if err != nil {
 		log.Fatalf("Ошибка инициализации миграций: %v", err)

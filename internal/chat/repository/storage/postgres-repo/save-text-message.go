@@ -24,7 +24,7 @@ func (p *Postgres) SaveTextMessage(
 	}
 
 	perform := func() error {
-		return p.DB.Client.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		return p.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 			message := textMessage.GetMessage()
 
 			if err := tx.Create(message).Error; err != nil {

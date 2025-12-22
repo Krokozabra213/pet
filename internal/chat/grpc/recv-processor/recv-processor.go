@@ -20,14 +20,13 @@ type IHandlerFactory interface {
 }
 
 type MessageProcessor struct {
-	// TODO: ADD LOGGER
 	log     *slog.Logger
 	factory IHandlerFactory
 }
 
-func New(log *slog.Logger, factory IHandlerFactory) *MessageProcessor {
+func New(factory IHandlerFactory) *MessageProcessor {
 	op := "chat.Handler.MessageProcessor"
-	log = log.With(
+	log := slog.With(
 		slog.String("op", op),
 	)
 

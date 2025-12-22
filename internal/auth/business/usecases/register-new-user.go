@@ -21,7 +21,7 @@ func (a *Auth) RegisterNewUser(
 	username := input.GetUsername()
 	password := input.GetPassword()
 
-	log := a.log.With(
+	log := slog.With(
 		slog.String("op", op),
 		slog.String("username", username),
 	)

@@ -1,8 +1,6 @@
 package app
 
 import (
-	"log/slog"
-
 	"github.com/Krokozabra213/protos/gen/go/chat"
 	appgrpc "github.com/Krokozabra213/sso/internal/chat/app/grpc"
 	chatusecases "github.com/Krokozabra213/sso/internal/chat/business/usecases"
@@ -17,13 +15,11 @@ import (
 
 type ChatAppBuilder struct {
 	cfg *chatnewconfig.Config
-	log *slog.Logger
 }
 
-func NewAppBuilder(cfg *chatnewconfig.Config, log *slog.Logger) *ChatAppBuilder {
+func NewAppBuilder(cfg *chatnewconfig.Config) *ChatAppBuilder {
 	return &ChatAppBuilder{
 		cfg: cfg,
-		log: log,
 	}
 }
 
@@ -63,16 +59,16 @@ func (builder *ChatAppBuilder) Business(
 	defaultMessageSaver chatusecases.IMessageSaver,
 ) chatinterfaces.IBusiness {
 	return chatusecases.New(
-		builder.log, builder.cfg,
+		builder.cfg,
 		clientProvider, messageProvider,
 		defaultMessageSaver,
 	)
 }
 
 func (builder *ChatAppBuilder) Handler(business chatinterfaces.IBusiness) chat.ChatServer {
-	return chatgrpc.New(builder.log, business)
+	return chatgrpc.New(business)
 }
 
 func (builder *ChatAppBuilder) BuildGRPCApp(handler chat.ChatServer) *appgrpc.App {
-	return appgrpc.New(builder.log, builder.cfg.GRPC.Host, builder.cfg.GRPC.Port, handler)
+	return appgrpc.New(builder.cfg.GRPC.Host, builder.cfg.GRPC.Port, handler)
 }

@@ -12,7 +12,11 @@ var (
 
 type (
 	Postgres struct {
-		DSN string
+		DSN       string
+		User      string
+		Password  string
+		DB        string
+		LocalPort string
 	}
 
 	Redis struct {
@@ -35,9 +39,5 @@ type (
 		ReadTimeout        time.Duration `mapstructure:"readTimeout"`
 		WriteTimeout       time.Duration `mapstructure:"writeTimeout"`
 		MaxHeaderMegabytes int           `mapstructure:"maxHeaderBytes"`
-	}
-
-	LoggerConfig struct {
-		AppSecretKey int `mapstructure:"level"`
 	}
 )
