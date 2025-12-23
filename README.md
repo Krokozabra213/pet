@@ -38,11 +38,13 @@ POSTGRES_DB=postgres
 POSTGRES_PORT=5555
 ```
 
-user commands:
+use commands:
 
 task docker-auth -> task migrate-auth -> task run-auth  (to local run auth service)
 
 task in-docker-auth -> task migrate-auth                (to run auth service in docker container)
+
+
 
 
 Create chat.env file in root directory and add following values ​​to it to run:
@@ -69,7 +71,7 @@ POSTGRES_DB=postgres
 POSTGRES_PORT=5600
 ```
 
-user commands:
+use commands:
 
 task docker-chat -> task migrate-chat -> task run-chat  (to local run chat service)
 
