@@ -9,7 +9,8 @@ To work with JWT tokens, you need to create a private RSA key and store it in ./
 
 
 Create sso.env file in root directory and add following values ​​to it to run:
-in local machine
+
+In local machine
 ```dotenv
 
 DSN=host=localhost user=myuser password=mypassword dbname=postgres port=5555 sslmode=disable
@@ -23,7 +24,7 @@ POSTGRES_DB=postgres
 POSTGRES_PORT=5555
 ```
 
-in docker:
+In docker:
 ```dotenv
 
 DSN=host=postgres user=myuser password=mypassword dbname=postgres port=5555 sslmode=disable
@@ -38,12 +39,15 @@ POSTGRES_PORT=5555
 ```
 
 user commands:
+
 task docker-auth -> task migrate-auth -> task run-auth  (to local run auth service)
+
 task in-docker-auth -> task migrate-auth                (to run auth service in docker container)
 
 
 Create chat.env file in root directory and add following values ​​to it to run:
-in local machine:
+
+In local machine:
 ```dotenv
 
 DSN=host=localhost user=myuser password=mypassword dbname=postgres port=5600 sslmode=disable
@@ -54,7 +58,7 @@ POSTGRES_DB=postgres
 POSTGRES_PORT=5600
 ```
 
-in docker:
+In docker:
 ```dotenv
 
 DSN=host=postgres user=myuser password=mypassword dbname=postgres port=5600 sslmode=disable
@@ -66,7 +70,9 @@ POSTGRES_PORT=5600
 ```
 
 user commands:
+
 task docker-chat -> task migrate-chat -> task run-chat  (to local run chat service)
+
 task in-docker-chat -> task migrate-chat                (to run chat service in docker container)
 
 
