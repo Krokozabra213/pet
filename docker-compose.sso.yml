@@ -31,13 +31,14 @@ services:
     image: postgres:16.4
     env_file:
       - sso.env
+    command: postgres -p 5555
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - postgres-data-sso:/var/lib/postgresql/data
     ports:
-      - "0.0.0.0:5555:5432"
+      - "0.0.0.0:5555:5555"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB} -p 5555"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -46,20 +47,12 @@ services:
 
   adminer:
     image: adminer
-    container_name: adminer
-    env_file:
-      - sso.env        
+    container_name: adminer     
     ports:
       - "0.0.0.0:8100:8080"  
     depends_on:
       postgres:
         condition: service_healthy
-    environment:
-      - ADMINER_DEFAULT_SERVER=postgres    
-      - ADMINER_DEFAULT_USERNAME=$${PG_USER}
-      - ADMINER_DEFAULT_PASSWORD=$${PG_PASSWORD}
-      - ADMINER_DEFAULT_DATABASE=$${PG_DB}
-      - ADMINER_DESIGN=pepa
     restart: unless-stopped
     networks:
       - app-network
@@ -81,7 +74,7 @@ services:
       - "0.0.0.0:6379:6379"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "$${REDIS_PASS}", "ping"]
+      test: ["CMD-SHELL", "redis-cli", "-a", "$${REDIS_PASS}", "ping"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -112,7 +105,7 @@ services:
 
 volumes:
   redis-data:
-  postgres-data:
+  postgres-data-sso:
 
 networks:
   app-network:
