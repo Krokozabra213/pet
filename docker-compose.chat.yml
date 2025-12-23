@@ -39,20 +39,12 @@ services:
 
   adminer:
     image: adminer
-    container_name: adminer
-    env_file:
-      - chat.env        
+    container_name: adminer      
     ports:
       - "0.0.0.0:8110:8080"  
     depends_on:
       postgres:
         condition: service_healthy
-    environment:
-      - ADMINER_DEFAULT_SERVER=postgres:5600  
-      - ADMINER_DEFAULT_USERNAME=$${PG_USER}
-      - ADMINER_DEFAULT_PASSWORD=$${PG_PASSWORD}
-      - ADMINER_DEFAULT_DATABASE=$${PG_DB}
-      - ADMINER_DESIGN=pepa
     restart: unless-stopped
     networks:
       - chat-network

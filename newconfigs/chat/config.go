@@ -118,10 +118,10 @@ func setFromEnv(envpath string, cfg *Config) error {
 	// 	return err
 	// }
 
-	cfg.PG.User = os.Getenv("PG_USER")
-	cfg.PG.Password = os.Getenv("PG_PASSWORD")
-	cfg.PG.DB = os.Getenv("PG_DB")
-	cfg.PG.LocalPort = os.Getenv("PG_LOCAL_PORT")
+	cfg.PG.User = os.Getenv("POSTGRES_USER")
+	cfg.PG.Password = os.Getenv("POSTGRES_PASSWORD")
+	cfg.PG.DB = os.Getenv("POSTGRES_DB")
+	cfg.PG.LocalPort = os.Getenv("POSTGRES_PORT")
 	return nil
 }
 

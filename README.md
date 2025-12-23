@@ -7,7 +7,9 @@
 
 To work with JWT tokens, you need to create a private RSA key and store it in ./secrets/private.pem.
 
-Create sso.env file in root directory and add following values ​​to it to run in local machine:
+
+Create sso.env file in root directory and add following values ​​to it to run:
+in local machine
 ```dotenv
 
 DSN=host=localhost user=myuser password=mypassword dbname=postgres port=5555 sslmode=disable
@@ -21,7 +23,7 @@ POSTGRES_DB=postgres
 POSTGRES_PORT=5555
 ```
 
-Run in docker:
+in docker:
 ```dotenv
 
 DSN=host=postgres user=myuser password=mypassword dbname=postgres port=5555 sslmode=disable
@@ -35,32 +37,37 @@ POSTGRES_DB=postgres
 POSTGRES_PORT=5555
 ```
 
-Use command 'task in-docker-auth' to build&run sso service in docker, or 'task run-auth'.
+user commands:
+task docker-auth -> task migrate-auth -> task run-auth  (to local run auth service)
+task in-docker-auth -> task migrate-auth                (to run auth service in docker container)
 
 
-Create chat.env file in root directory and add following values ​​to it to run in local machine:
+Create chat.env file in root directory and add following values ​​to it to run:
+in local machine:
 ```dotenv
 
-DSN=host=localhost user=user password=password dbname=postgres port=5600 sslmode=disable
+DSN=host=localhost user=myuser password=mypassword dbname=postgres port=5600 sslmode=disable
 APP_SECRET=your-very-long-and-secure-secret-key-here-256-bit
-PG_USER=user
-PG_PASSWORD=password
-PG_DB=postgres
-PG_LOCAL_PORT=5600
+POSTGRES_USER=myuser
+POSTGRES_PASSWORD=mypassword
+POSTGRES_DB=postgres
+POSTGRES_PORT=5600
 ```
 
-To run in docker:
+in docker:
 ```dotenv
 
-DSN=host=postgres user=user password=password dbname=postgres port=5600 sslmode=disable
+DSN=host=postgres user=myuser password=mypassword dbname=postgres port=5600 sslmode=disable
 APP_SECRET=your-very-long-and-secure-secret-key-here-256-bit
-PG_USER=user
-PG_PASSWORD=password
-PG_DB=postgres
-PG_LOCAL_PORT=5600
+POSTGRES_USER=myuser
+POSTGRES_PASSWORD=mypassword
+POSTGRES_DB=postgres
+POSTGRES_PORT=5600
 ```
 
-Use command 'task in-docker-chat' to build&run chat service in docker, or 'task run-chat'.
+user commands:
+task docker-chat -> task migrate-chat -> task run-chat  (to local run chat service)
+task in-docker-chat -> task migrate-chat                (to run chat service in docker container)
 
 
 

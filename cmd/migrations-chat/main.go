@@ -24,6 +24,7 @@ func main() {
 		"postgres://%s:%s@localhost:%s/%s?sslmode=disable",
 		cfg.PG.User, cfg.PG.Password, cfg.PG.LocalPort, cfg.PG.DB,
 	)
+	fmt.Println(dbURL)
 
 	m, err := migrate.New(
 		"file://"+path, // Путь к папке с миграциями

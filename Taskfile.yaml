@@ -1,17 +1,17 @@
 version: "3"
 
 tasks:
+  # для миграций
   migrate-auth:
-    deps: [docker-auth]
     desc: "migrations for auth service"
     cmds:
       - go run cmd/migrations-sso/main.go
   migrate-chat:
-    deps: [docker-chat]
     desc: "migrations for chat service"
     cmds:
       - go run cmd/migrations-chat/main.go
 
+  # для запуска сервиса локально
   docker-chat:
     desc: "docker compose up for chat service (detached mode)"
     cmds:
@@ -20,6 +20,8 @@ tasks:
     desc: "docker compose up for auth service (detached mode)"
     cmds:
       - docker compose -f docker-compose.sso.yml up -d --remove-orphans postgres redis redis-commander adminer
+
+  # для запуска сервиса в контейнере
   in-docker-auth:
     desc: "docker compose up for up sso service in docker "
     cmds:
@@ -29,6 +31,7 @@ tasks:
     cmds:
       - docker compose -f docker-compose.chat.yml up -d --remove-orphans chat
 
+  # для запуска сервиса локально
   run-auth:
     deps: [migrate-auth]
     desc: "run auth service"
@@ -40,6 +43,7 @@ tasks:
     cmds:
       - go run cmd/chat/main.go
 
+  # тесты
   test:
     desc: "test app"
     cmds:
