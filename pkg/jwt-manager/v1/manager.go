@@ -37,18 +37,18 @@ func New(public *rsa.PublicKey, private *rsa.PrivateKey) (*JWTManager, error) {
 	return &JWTManager{publicKey: public, privateKey: private}, nil
 }
 
-func (t *JWTManager) GenerateTokens(
+func (m *JWTManager) GenerateTokens(
 	accessTTL, refreshTTL time.Duration, data *Data,
 ) (string, string, error) {
 
-	accessToken, err := t.GenerateAccess(
+	accessToken, err := m.GenerateAccess(
 		accessTTL, data.UserID, data.Username, data.AppID,
 	)
 	if err != nil {
 		return "", "", err
 	}
 
-	refreshToken, err := t.GenerateRefresh(
+	refreshToken, err := m.GenerateRefresh(
 		refreshTTL, data.UserID, data.Username, data.AppID,
 	)
 	if err != nil {
