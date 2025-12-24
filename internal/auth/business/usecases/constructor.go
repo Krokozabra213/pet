@@ -10,6 +10,8 @@ import (
 	jwtv1 "github.com/Krokozabra213/sso/pkg/jwt-manager/v1"
 )
 
+//go:generate mockgen  -source=constructor.go -destination=mocks/mocks.go
+
 type IJWTManager interface {
 	GenerateTokens(data *jwtv1.Data) (string, string, error)
 	ParseAccess(token string) (*jwtv1.AccessData, error)
