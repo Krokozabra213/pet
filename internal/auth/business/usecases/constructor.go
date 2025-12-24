@@ -2,13 +2,23 @@ package authusecases
 
 import (
 	"context"
-	"crypto/rsa"
 	"time"
 
 	"github.com/Krokozabra213/sso/internal/auth/domain"
 	authgrpc "github.com/Krokozabra213/sso/internal/auth/grpc/auth-grpc"
 	ssonewconfig "github.com/Krokozabra213/sso/newconfigs/sso"
+	jwtv1 "github.com/Krokozabra213/sso/pkg/jwt-manager/v1"
 )
+
+type IJWTManager interface {
+	GenerateTokens(data *jwtv1.Data) (string, string, error)
+	ParseAccess(token string) (*jwtv1.AccessData, error)
+	ParseRefresh(token string) (*jwtv1.RefreshData, error)
+}
+
+type IHasher interface {
+	HashJWTTokenHMAC(token string) string
+}
 
 type ITokenProvider interface {
 	SaveToken(ctx context.Context, token string, expiresAt time.Time) error
@@ -26,31 +36,27 @@ type IAppProvider interface {
 	AppByID(ctx context.Context, appID int) (*domain.App, error)
 }
 
-type IKeyManager interface {
-	GetPrivateKey() *rsa.PrivateKey
-	GetPublicKey() *rsa.PublicKey
-	GetPublicKeyPEM() (string, error)
-}
-
 type Auth struct {
 	cfg          *ssonewconfig.Config
 	tokenRepo    ITokenProvider
 	userProvider IUserProvider
 	appProvider  IAppProvider
-	keyManager   IKeyManager
+	jwtManager   IJWTManager
+	hasher       IHasher
+	publicKeyPEM string
 }
 
 func New(
-	cfg *ssonewconfig.Config,
-	userProvider IUserProvider, appProvider IAppProvider,
-	tokenRepo ITokenProvider, keyManager IKeyManager,
+	cfg *ssonewconfig.Config, userProvider IUserProvider, appProvider IAppProvider, tokenRepo ITokenProvider,
+	jwtManager IJWTManager, hasher IHasher, publicKeyPEM string,
 ) authgrpc.IBusiness {
 	return &Auth{
-
 		cfg:          cfg,
 		userProvider: userProvider,
 		appProvider:  appProvider,
 		tokenRepo:    tokenRepo,
-		keyManager:   keyManager,
+		jwtManager:   jwtManager,
+		hasher:       hasher,
+		publicKeyPEM: publicKeyPEM,
 	}
 }

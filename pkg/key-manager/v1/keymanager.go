@@ -1,4 +1,4 @@
-package keymanager
+package keymanagerv1
 
 import (
 	"bytes"

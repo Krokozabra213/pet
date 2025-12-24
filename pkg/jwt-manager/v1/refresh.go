@@ -8,12 +8,12 @@ import (
 )
 
 func (m *JWTManager) GenerateRefresh(
-	refreshTTL time.Duration, userID uint64, username string, appID uint,
+	userID uint64, username string, appID int,
 ) (string, error) {
 	token := jwt.New(jwt.SigningMethodRS256)
 	claims := token.Claims.(jwt.MapClaims)
 
-	err := generateRefreshClaims(claims, refreshTTL, userID, username, appID)
+	err := m.generateRefreshClaims(claims, userID, username, appID)
 	if err != nil {
 		return "", err
 	}
@@ -26,8 +26,8 @@ func (m *JWTManager) GenerateRefresh(
 	return tokenString, nil
 }
 
-func generateRefreshClaims(
-	claims jwt.MapClaims, refreshTTL time.Duration, userID uint64, username string, appID uint,
+func (m *JWTManager) generateRefreshClaims(
+	claims jwt.MapClaims, userID uint64, username string, appID int,
 ) error {
 
 	jwtID, err := generateTokenID()
@@ -38,7 +38,7 @@ func generateRefreshClaims(
 	claims[JWTID] = jwtID
 	claims[UserID] = userID
 	claims[Username] = username
-	claims[ExpiredAt] = time.Now().Add(refreshTTL).Unix()
+	claims[ExpiredAt] = time.Now().Add(m.refreshTTL).Unix()
 	claims[AppID] = appID
 
 	return nil

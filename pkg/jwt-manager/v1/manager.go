@@ -17,15 +17,19 @@ const (
 type Data struct {
 	UserID   uint64
 	Username string
-	AppID    uint
+	AppID    int
 }
 
 type JWTManager struct {
 	publicKey  *rsa.PublicKey
 	privateKey *rsa.PrivateKey
+	accessTTL  time.Duration
+	refreshTTL time.Duration
 }
 
-func New(public *rsa.PublicKey, private *rsa.PrivateKey) (*JWTManager, error) {
+func New(
+	public *rsa.PublicKey, private *rsa.PrivateKey, accessTTL, refreshTTL time.Duration,
+) (*JWTManager, error) {
 	if public == nil {
 		return nil, ErrEmptyPublicKey
 	}
@@ -34,22 +38,22 @@ func New(public *rsa.PublicKey, private *rsa.PrivateKey) (*JWTManager, error) {
 		return nil, ErrEmptyPrivateKey
 	}
 
-	return &JWTManager{publicKey: public, privateKey: private}, nil
+	return &JWTManager{
+		publicKey: public, privateKey: private, accessTTL: accessTTL, refreshTTL: refreshTTL,
+	}, nil
 }
 
-func (m *JWTManager) GenerateTokens(
-	accessTTL, refreshTTL time.Duration, data *Data,
-) (string, string, error) {
+func (m *JWTManager) GenerateTokens(data *Data) (string, string, error) {
 
 	accessToken, err := m.GenerateAccess(
-		accessTTL, data.UserID, data.Username, data.AppID,
+		data.UserID, data.Username, data.AppID,
 	)
 	if err != nil {
 		return "", "", err
 	}
 
 	refreshToken, err := m.GenerateRefresh(
-		refreshTTL, data.UserID, data.Username, data.AppID,
+		data.UserID, data.Username, data.AppID,
 	)
 	if err != nil {
 		return "", "", err

@@ -1,6 +1,8 @@
 package app
 
 import (
+	"crypto/rsa"
+
 	"github.com/Krokozabra213/protos/gen/go/sso"
 	appgrpc "github.com/Krokozabra213/sso/internal/auth/app/grpc"
 	authusecases "github.com/Krokozabra213/sso/internal/auth/business/usecases"
@@ -20,14 +22,15 @@ type IAppBuilder interface {
 	TokenProvider(connect *redispet.RDB) authusecases.ITokenProvider
 
 	// Libraries
-	KeyManager() authusecases.IKeyManager
+	KeyManager() IKeyManager
+	Hasher() authusecases.IHasher
+	JWTManager(public *rsa.PublicKey, private *rsa.PrivateKey) authusecases.IJWTManager
 
 	// Business-Logic
 	Business(
-		userProvider authusecases.IUserProvider,
-		appProvider authusecases.IAppProvider,
-		tokenRepo authusecases.ITokenProvider,
-		keyManager authusecases.IKeyManager,
+		userProvider authusecases.IUserProvider, appProvider authusecases.IAppProvider,
+		tokenRepo authusecases.ITokenProvider, jwtManager authusecases.IJWTManager, hasher authusecases.IHasher,
+		publicKeyPEM string,
 	) authgrpc.IBusiness
 
 	// Handler
@@ -58,11 +61,13 @@ func (fack *AppFactory) Create() *appgrpc.GRPCApp {
 	tokenRepo := fack.builder.TokenProvider(redisConn)
 
 	//libraries
+	hasher := fack.builder.Hasher()
 	keyManager := fack.builder.KeyManager()
+	jwtManager := fack.builder.JWTManager(keyManager.GetPublicKey(), keyManager.GetPrivateKey())
 
 	// Business-Logic
 	business := fack.builder.Business(
-		userRepo, appRepo, tokenRepo, keyManager,
+		userRepo, appRepo, tokenRepo, jwtManager, hasher, keyManager.GetPublicKeyPEM(),
 	)
 
 	// Handler

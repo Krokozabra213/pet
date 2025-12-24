@@ -37,8 +37,7 @@ func (a *Auth) PublicKey(
 		return nil, authBusiness.BusinessError(domain.AppEntity, authBusiness.ErrInternal)
 	}
 
+	uotput := businessoutput.NewPublicKeyOutput(a.publicKeyPEM)
 	log.Info("ending publickey process")
-	publicKey, err := a.keyManager.GetPublicKeyPEM()
-	uotput := businessoutput.NewPublicKeyOutput(publicKey)
 	return uotput, err
 }

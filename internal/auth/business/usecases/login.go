@@ -9,8 +9,8 @@ import (
 	"github.com/Krokozabra213/sso/internal/auth/domain"
 	businessinput "github.com/Krokozabra213/sso/internal/auth/domain/business-input"
 	businessoutput "github.com/Krokozabra213/sso/internal/auth/domain/business-output"
-	"github.com/Krokozabra213/sso/internal/auth/lib/jwt"
 	"github.com/Krokozabra213/sso/internal/auth/repository/storage"
+	jwtv1 "github.com/Krokozabra213/sso/pkg/jwt-manager/v1"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -30,7 +30,7 @@ func (a *Auth) Login(
 	)
 	log.Info("starting user logining process")
 
-	app, err := a.appProvider.AppByID(ctx, appID)
+	_, err := a.appProvider.AppByID(ctx, appID)
 	if err != nil {
 		log.Error("failed get app by id", slog.String("error", err.Error()))
 		if errors.Is(err, storage.ErrCtxCancelled) || errors.Is(err, storage.ErrCtxDeadline) {
@@ -60,18 +60,19 @@ func (a *Auth) Login(
 		return nil, authBusiness.BusinessError(domain.UserEntity, authBusiness.ErrInvalidCredentials)
 	}
 
-	tokenGen := jwt.New(
-		user, app, a.cfg.Auth.JWT.AccessTokenTTL,
-		a.cfg.Auth.JWT.RefreshTokenTTL, a.keyManager,
-	)
+	data := jwtv1.Data{
+		UserID:   user.ID,
+		Username: username,
+		AppID:    appID,
+	}
+	access, refresh, err := a.jwtManager.GenerateTokens(&data)
 
-	tokenPair, err := tokenGen.GenerateTokenPair()
 	if err != nil {
 		log.Error("failed generate token", slog.String("error", err.Error()))
 		return nil, authBusiness.BusinessError(domain.TokenEntity, authBusiness.ErrTokenGenerate)
 	}
 
 	log.Info("user successfully logining")
-	uotput := businessoutput.NewLoginOutput(tokenPair.AccessToken, tokenPair.RefreshToken)
+	uotput := businessoutput.NewLoginOutput(access, refresh)
 	return uotput, nil
 }

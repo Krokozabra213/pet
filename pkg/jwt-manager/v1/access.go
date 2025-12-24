@@ -8,13 +8,13 @@ import (
 )
 
 func (m *JWTManager) GenerateAccess(
-	accessTTL time.Duration, userID uint64, username string, appID uint,
+	userID uint64, username string, appID int,
 ) (string, error) {
 
 	token := jwt.New(jwt.SigningMethodRS256)
 	claims := token.Claims.(jwt.MapClaims)
 
-	generateAccessClaims(claims, accessTTL, userID, username, appID)
+	m.generateAccessClaims(claims, userID, username, appID)
 
 	tokenString, err := token.SignedString(m.privateKey)
 	if err != nil {
@@ -24,13 +24,13 @@ func (m *JWTManager) GenerateAccess(
 	return tokenString, nil
 }
 
-func generateAccessClaims(
-	claims jwt.MapClaims, accessTTL time.Duration, userID uint64, username string, appID uint,
+func (m *JWTManager) generateAccessClaims(
+	claims jwt.MapClaims, userID uint64, username string, appID int,
 ) {
 	claims[AppID] = appID
 	claims[UserID] = userID
 	claims[Username] = username
-	claims[ExpiredAt] = time.Now().Add(accessTTL).Unix()
+	claims[ExpiredAt] = time.Now().Add(m.accessTTL).Unix()
 }
 
 type AccessData struct {
