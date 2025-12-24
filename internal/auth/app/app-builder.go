@@ -71,7 +71,9 @@ func (builder *AuthAppBuilder) Hasher() authusecases.IHasher {
 }
 
 func (builder *AuthAppBuilder) JWTManager(public *rsa.PublicKey, private *rsa.PrivateKey) authusecases.IJWTManager {
-	manager, err := jwtv1.New(public, private)
+	manager, err := jwtv1.New(
+		public, private, builder.cfg.Auth.JWT.AccessTokenTTL, builder.cfg.Auth.JWT.RefreshTokenTTL,
+	)
 	if err != nil {
 		panic(err)
 	}

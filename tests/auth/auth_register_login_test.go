@@ -5,8 +5,6 @@ import (
 	"time"
 
 	"github.com/Krokozabra213/protos/gen/go/sso"
-	"github.com/Krokozabra213/sso/internal/auth/lib/jwt"
-	keymanager "github.com/Krokozabra213/sso/internal/auth/lib/key-manager"
 	"github.com/Krokozabra213/sso/tests/auth/suite"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -31,10 +29,7 @@ func TestRegisterLogin_Login_HappyPath(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotEmpty(t, respPublicKey.GetPublicKey())
 
-	publicKeyManager, err := keymanager.NewPublic([]byte(respPublicKey.GetPublicKey()))
-
-	require.NoError(t, err)
-	assert.NotEmpty(t, publicKeyManager)
+	assert.Equal(t, respPublicKey.GetPublicKey(), st.PublicPEM)
 
 	username := randomUsername()
 	pass := randomFakePassword()
@@ -65,22 +60,22 @@ func TestRegisterLogin_Login_HappyPath(t *testing.T) {
 	require.NotEmpty(t, accessToken)
 	require.NotEmpty(t, refreshToken)
 
-	accessParsedData, err := jwt.ParseAccess(accessToken, publicKeyManager)
+	accessData, err := st.JWTmanager.ParseAccess(accessToken)
 	require.NoError(t, err)
-	assert.NotNil(t, accessParsedData)
-	assert.Equal(t, respReg.GetUserId(), int64(accessParsedData.UserID))
-	assert.Equal(t, appID, accessParsedData.AppID)
-	assert.Equal(t, username, accessParsedData.Username)
-	assert.WithinDuration(t, accessExp, accessParsedData.Exp, 10*time.Second)
+	assert.NotNil(t, accessData)
+	assert.Equal(t, respReg.GetUserId(), int64(accessData.UserID))
+	assert.Equal(t, appID, accessData.AppID)
+	assert.Equal(t, username, accessData.Username)
+	assert.WithinDuration(t, accessExp, accessData.Exp, 10*time.Second)
 
-	refreshParsedData, err := jwt.ParseRefresh(refreshToken, publicKeyManager)
+	refreshData, err := st.JWTmanager.ParseRefresh(refreshToken)
 	require.NoError(t, err)
-	assert.NotNil(t, refreshParsedData)
-	assert.Equal(t, respReg.GetUserId(), int64(refreshParsedData.UserID))
-	assert.Equal(t, appID, refreshParsedData.AppID)
-	assert.Equal(t, username, refreshParsedData.Username)
-	assert.NotEmpty(t, refreshParsedData.JWTID)
-	assert.WithinDuration(t, refreshExp, refreshParsedData.Exp, 10*time.Second)
+	assert.NotNil(t, refreshData)
+	assert.Equal(t, respReg.GetUserId(), int64(refreshData.UserID))
+	assert.Equal(t, appID, refreshData.AppID)
+	assert.Equal(t, username, refreshData.Username)
+	assert.NotEmpty(t, refreshData.JWTID)
+	assert.WithinDuration(t, refreshExp, refreshData.Exp, 10*time.Second)
 
 	// access token завершился, сервер обращается за новой парой
 	respRefresh, err := st.AuthClient.Refresh(ctx, &sso.RefreshRequest{
@@ -97,22 +92,22 @@ func TestRegisterLogin_Login_HappyPath(t *testing.T) {
 	assert.NotEmpty(t, accessToken)
 	assert.NotEmpty(t, refreshToken)
 
-	accessParsedData, err = jwt.ParseAccess(accessToken, publicKeyManager)
+	accessData, err = st.JWTmanager.ParseAccess(accessToken)
 	require.NoError(t, err)
-	assert.NotNil(t, accessParsedData)
-	assert.Equal(t, respReg.GetUserId(), int64(accessParsedData.UserID))
-	assert.Equal(t, appID, accessParsedData.AppID)
-	assert.Equal(t, username, accessParsedData.Username)
-	assert.WithinDuration(t, accessExp, accessParsedData.Exp, 10*time.Second)
+	assert.NotNil(t, accessData)
+	assert.Equal(t, respReg.GetUserId(), int64(accessData.UserID))
+	assert.Equal(t, appID, accessData.AppID)
+	assert.Equal(t, username, accessData.Username)
+	assert.WithinDuration(t, accessExp, accessData.Exp, 10*time.Second)
 
-	refreshParsedData, err = jwt.ParseRefresh(refreshToken, publicKeyManager)
+	refreshData, err = st.JWTmanager.ParseRefresh(refreshToken)
 	require.NoError(t, err)
-	assert.NotNil(t, refreshParsedData)
-	assert.Equal(t, respReg.GetUserId(), int64(refreshParsedData.UserID))
-	assert.Equal(t, appID, refreshParsedData.AppID)
-	assert.Equal(t, username, refreshParsedData.Username)
-	assert.NotEmpty(t, refreshParsedData.JWTID)
-	assert.WithinDuration(t, refreshExp, refreshParsedData.Exp, 10*time.Second)
+	assert.NotNil(t, refreshData)
+	assert.Equal(t, respReg.GetUserId(), int64(refreshData.UserID))
+	assert.Equal(t, appID, refreshData.AppID)
+	assert.Equal(t, username, refreshData.Username)
+	assert.NotEmpty(t, refreshData.JWTID)
+	assert.WithinDuration(t, refreshExp, refreshData.Exp, 10*time.Second)
 
 	// пользователь выходит с сайта
 	respLogout, err := st.AuthClient.Logout(ctx, &sso.LogoutRequest{

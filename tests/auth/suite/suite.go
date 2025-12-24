@@ -12,6 +12,8 @@ import (
 	ssonewconfig "github.com/Krokozabra213/sso/newconfigs/sso"
 	postgrespet "github.com/Krokozabra213/sso/pkg/db/postgres-pet"
 	redispet "github.com/Krokozabra213/sso/pkg/db/redis-pet"
+	jwtv1 "github.com/Krokozabra213/sso/pkg/jwt-manager/v1"
+	keymanagerv1 "github.com/Krokozabra213/sso/pkg/key-manager/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -28,6 +30,8 @@ type SSOSuite struct {
 	AuthClient sso.AuthClient
 	DB         *postgrespet.PGDB
 	Redis      *redispet.RDB
+	PublicPEM  string
+	JWTmanager *jwtv1.JWTManager
 }
 
 func New(t *testing.T) (context.Context, *SSOSuite) {
@@ -59,12 +63,23 @@ func New(t *testing.T) (context.Context, *SSOSuite) {
 		t.Fatalf("grpc server connection failed %v", err)
 	}
 
+	keyManager, err := keymanagerv1.New(cfg.Auth.JWT.PrivateKey)
+	if err != nil {
+		t.Fatalf("keymanager start failed %v", err)
+	}
+	jwtManager, err := jwtv1.New(keyManager.GetPublicKey(), keyManager.GetPrivateKey(), cfg.Auth.JWT.AccessTokenTTL, cfg.Auth.JWT.RefreshTokenTTL)
+	if err != nil {
+		t.Fatalf("jwtmanager start failed %v", err)
+	}
+
 	return ctx, &SSOSuite{
 		T:          t,
 		Cfg:        cfg,
 		AuthClient: sso.NewAuthClient(cc),
 		DB:         DB,
 		Redis:      redis,
+		PublicPEM:  keyManager.GetPublicKeyPEM(),
+		JWTmanager: jwtManager,
 	}
 }
 
