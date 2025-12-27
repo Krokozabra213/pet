@@ -1,0 +1,14 @@
+http:
+  maxHeaderBytes: 1
+  readTimeout: 10s
+  writeTimeout: 10s
+  host: 0.0.0.0
+  port: 8100
+
+limiter:
+  rps: 10
+  burst: 20
+  ttl: 10m
+
+mongo:
+  databaseName: platform
