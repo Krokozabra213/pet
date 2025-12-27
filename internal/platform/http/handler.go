@@ -5,6 +5,7 @@ import (
 
 	"github.com/Krokozabra213/sso/internal/platform/business"
 	platformconfig "github.com/Krokozabra213/sso/newconfigs/platform"
+	"github.com/Krokozabra213/sso/pkg/limiter"
 	"github.com/gin-gonic/gin"
 )
 
@@ -24,6 +25,8 @@ func Init(cfg *platformconfig.Config) *gin.Engine {
 	router.Use(
 		gin.Recovery(),
 		gin.Logger(),
+		limiter.Limit(cfg.Limiter.RPS, cfg.Limiter.Burst, cfg.Limiter.TTL),
+		corsMiddleware,
 	)
 
 	router.GET("/ping", func(c *gin.Context) {
