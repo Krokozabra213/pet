@@ -1,4 +1,4 @@
-package platform
+package platformconfig
 
 import (
 	"fmt"
@@ -33,6 +33,8 @@ type (
 
 	MongoConfig struct {
 		URI      string
+		Host     string
+		Port     string
 		User     string
 		Password string
 		Name     string `mapstructure:"databaseName"`
@@ -138,6 +140,12 @@ func setFromEnv(envpath string, cfg *Config) error {
 	if err != nil {
 		return err
 	}
+
+	cfg.Mongo.URI = os.Getenv("MONGO_URI")
+	cfg.Mongo.Host = os.Getenv("MONGO_HOST")
+	cfg.Mongo.Port = os.Getenv("MONGO_PORT")
+	cfg.Mongo.User = os.Getenv("MONGO_INITDB_ROOT_USERNAME")
+	cfg.Mongo.Password = os.Getenv("MONGO_INITDB_ROOT_PASSWORD")
 
 	cfg.App.Environment = os.Getenv("APP_ENV")
 	cfg.App.AppSecretKey = []byte(os.Getenv("SECRET_KEY"))
