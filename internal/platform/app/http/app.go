@@ -11,6 +11,7 @@ import (
 	"github.com/Krokozabra213/sso/internal/platform/business"
 	ssoclient "github.com/Krokozabra213/sso/internal/platform/clients/sso"
 	httpPlatform "github.com/Krokozabra213/sso/internal/platform/http"
+	"github.com/Krokozabra213/sso/internal/platform/repository"
 	platformconfig "github.com/Krokozabra213/sso/newconfigs/platform"
 	jwtv1 "github.com/Krokozabra213/sso/pkg/jwt-manager/v1"
 	keymanagerv1 "github.com/Krokozabra213/sso/pkg/key-manager/v1"
@@ -26,8 +27,6 @@ func Run(configfile, envfile string) {
 	fmt.Printf("%+v\n", cfg)
 
 	logger.Init(cfg.App.Environment)
-
-	// получить publickey из sso сервиса
 
 	// TODO: START MONGO CLIENT
 	// TODO: CONNECT MONGODB
@@ -52,7 +51,11 @@ func Run(configfile, envfile string) {
 	if err != nil {
 		panic(err)
 	}
-	business := business.New(cfg)
+	repositories := repository.NewRepositories(nil)
+	business := business.New(business.Deps{
+		Config: cfg,
+		Repos:  repositories,
+	})
 	handler := httpPlatform.NewHandler(business, jwtValidator)
 
 	server := NewServer(cfg, handler.Init(cfg))

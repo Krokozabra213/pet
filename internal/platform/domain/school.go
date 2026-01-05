@@ -1,4 +1,4 @@
-package domain
+package newdomain
 
 import (
 	"time"
@@ -6,16 +6,25 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// коллекция school
 type School struct {
 	ID          primitive.ObjectID
 	Name        string
 	Description string
 	CreatedAt   time.Time
 	Admins      []Admin
-	Courses     []Course
+	Courses     []CourseSubCollection
 	Info        Info
 	Published   bool
+}
+
+type CourseSubCollection struct {
+	ID          primitive.ObjectID
+	Name        string
+	Description string
+	Color       string
+	ImageURL    string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 }
 
 type Info struct {
@@ -32,11 +41,4 @@ type SchoolContacts struct {
 	Address            string
 	Email              string
 	Phone              string
-}
-
-type Admin struct {
-	UserID   uint64
-	Name     string
-	Email    string
-	SchoolID primitive.ObjectID
 }

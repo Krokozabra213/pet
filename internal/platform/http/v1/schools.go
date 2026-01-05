@@ -4,10 +4,12 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 const (
-	EmptyIDParam = "empty id param"
+	EmptyIDParam   = "empty id param"
+	InvalidIDParam = "invalid id param"
 )
 
 type dataResponse struct {
@@ -42,9 +44,14 @@ func (h *Handler) getAllPublishedSchools(c *gin.Context) {
 
 func (h *Handler) getSchool(c *gin.Context) {
 	ctx := c.Request.Context()
-	id := c.Param("school_id")
-	if id == "" {
+	idParam := c.Param("school_id")
+	if idParam == "" {
 		c.AbortWithStatusJSON(http.StatusBadRequest, response{Message: EmptyIDParam})
+	}
+
+	id, err := primitive.ObjectIDFromHex(idParam)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, response{Message: InvalidIDParam})
 	}
 
 	schoolOutput, err := h.busines.Schools.GetByID(ctx, id)

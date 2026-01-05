@@ -4,13 +4,19 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func (h *Handler) getModule(c *gin.Context) {
 	ctx := c.Request.Context()
-	id := c.Param("module_id")
-	if id == "" {
+	idParam := c.Param("module_id")
+	if idParam == "" {
 		c.AbortWithStatusJSON(http.StatusBadRequest, response{Message: EmptyIDParam})
+	}
+
+	id, err := primitive.ObjectIDFromHex(idParam)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, response{Message: InvalidIDParam})
 	}
 
 	moduleOutput, err := h.busines.Modules.GetByID(ctx, id)

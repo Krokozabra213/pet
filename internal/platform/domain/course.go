@@ -1,4 +1,4 @@
-package domain
+package newdomain
 
 import (
 	"time"
@@ -15,24 +15,13 @@ type Course struct {
 	ImageURL    string
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
+	Modules     []ModulesSubCollection
 	Published   bool
 }
 
-type Module struct {
+type ModulesSubCollection struct {
 	ID          primitive.ObjectID
 	Name        string
 	Description string
 	Position    uint
-	Published   bool
-	CourseID    primitive.ObjectID
-	Lessons     []Lesson
-}
-
-type Lesson struct {
-	ID        primitive.ObjectID
-	Name      string
-	Position  uint
-	Published bool
-	Content   string
-	SchoolID  primitive.ObjectID
 }

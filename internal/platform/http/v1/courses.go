@@ -4,25 +4,25 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func (h *Handler) getCourse(c *gin.Context) {
 	ctx := c.Request.Context()
-	id := c.Param("course_id")
-	if id == "" {
+	idParam := c.Param("course_id")
+	if idParam == "" {
 		c.AbortWithStatusJSON(http.StatusBadRequest, response{Message: EmptyIDParam})
+	}
+
+	id, err := primitive.ObjectIDFromHex(idParam)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, response{Message: InvalidIDParam})
 	}
 
 	courseOutput, err := h.busines.Courses.GetByID(ctx, id)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, response{Message: err.Error()})
 	}
-
-	modulesOutput, err := h.busines.Modules.GetByCourseID(ctx, courseOutput.ID)
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, response{Message: err.Error()})
-	}
-	courseOutput.Modules = modulesOutput
 
 	response := dataResponse{
 		Data: courseOutput,
