@@ -64,7 +64,12 @@ func (m *JWTManager) ParseAccess(token string) (*AccessData, error) {
 		return nil, ErrValidToken
 	}
 
-	jwtData, err := accessClaims(t.Claims.(jwt.MapClaims))
+	claims, ok := t.Claims.(jwt.MapClaims)
+	if !ok {
+		return nil, ErrInvalidClaims
+	}
+
+	jwtData, err := accessClaims(claims)
 	if err != nil {
 		return nil, err
 	}

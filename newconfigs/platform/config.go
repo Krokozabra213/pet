@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"time"
 
 	"github.com/Krokozabra213/sso/newconfigs"
@@ -23,12 +24,17 @@ const (
 
 	EnvLocal = "local"
 	Prod     = "prod"
+
+	defaultSSOHost    = "localhost"
+	defaultSSOTimeout = 5 * time.Second
+	defaultSSORetries = 3
 )
 
 type (
 	AppConfig struct {
 		AppSecretKey []byte
 		Environment  string
+		AppID        int32
 	}
 
 	MongoConfig struct {
@@ -46,6 +52,13 @@ type (
 		AccessKey string
 		SecretKey string
 	}
+
+	SSOConfig struct {
+		Host         string `mapstructure:"host"`
+		Port         string
+		Timeout      time.Duration `mapstructure:"timeout"`
+		RetriesCount int           `mapstructure:"retries"`
+	}
 )
 
 type Config struct {
@@ -54,6 +67,7 @@ type Config struct {
 	FileStorage FileStorageConfig
 	HTTP        newconfigs.HTTPConfig
 	Limiter     newconfigs.LimiterConfig
+	SSOConfig   SSOConfig
 }
 
 func newCfg() Config {
@@ -63,8 +77,13 @@ func newCfg() Config {
 		HTTP:        newconfigs.HTTPConfig{},
 		FileStorage: FileStorageConfig{},
 		Limiter:     newconfigs.LimiterConfig{},
+		SSOConfig:   SSOConfig{},
 	}
 	return cfg
+}
+
+func (c Config) SSOServiceAddress() string {
+	return c.SSOConfig.Host + ":" + c.SSOConfig.Port
 }
 
 func populateDefault() {
@@ -77,6 +96,10 @@ func populateDefault() {
 	viper.SetDefault("limiter.rps", defaultLimiterRPS)
 	viper.SetDefault("limiter.burst", defaultLimiterBurst)
 	viper.SetDefault("limiter.ttl", defaultLimiterTTL)
+
+	viper.SetDefault("sso.host", defaultSSOHost)
+	viper.SetDefault("sso.timeout", defaultSSOTimeout)
+	viper.SetDefault("sso.retries", defaultSSORetries)
 }
 
 func parseConfigFile(configPath string) error {
@@ -132,6 +155,10 @@ func unmarshal(cfg *Config, root string) error {
 		return err
 	}
 
+	if err := viper.UnmarshalKey("sso", &cfg.SSOConfig); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -147,8 +174,12 @@ func setFromEnv(envpath string, cfg *Config) error {
 	cfg.Mongo.User = os.Getenv("MONGO_INITDB_ROOT_USERNAME")
 	cfg.Mongo.Password = os.Getenv("MONGO_INITDB_ROOT_PASSWORD")
 
+	appIDString := os.Getenv("APP_ID")
+	appIDInt, err := strconv.Atoi(appIDString)
+
 	cfg.App.Environment = os.Getenv("APP_ENV")
 	cfg.App.AppSecretKey = []byte(os.Getenv("SECRET_KEY"))
+	cfg.App.AppID = int32(appIDInt)
 
 	cfg.HTTP.Host = os.Getenv("HOST")
 
@@ -156,6 +187,9 @@ func setFromEnv(envpath string, cfg *Config) error {
 	cfg.FileStorage.Bucket = os.Getenv("FILESTORAGE_BUCKET")
 	cfg.FileStorage.AccessKey = os.Getenv("FILESTORAGE_ACCESS_KEY")
 	cfg.FileStorage.SecretKey = os.Getenv("FILESTORAGE_SECRET_KEY")
+
+	cfg.SSOConfig.Host = os.Getenv("SSO_HOST")
+	cfg.SSOConfig.Port = os.Getenv("SSO_PORT")
 
 	return nil
 }

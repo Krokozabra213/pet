@@ -76,7 +76,12 @@ func (m *JWTManager) ParseRefresh(token string) (*RefreshData, error) {
 		return nil, ErrValidToken
 	}
 
-	jwtData, err := refreshClaims(t.Claims.(jwt.MapClaims))
+	claims, ok := t.Claims.(jwt.MapClaims)
+	if !ok {
+		return nil, ErrInvalidClaims
+	}
+
+	jwtData, err := refreshClaims(claims)
 	if err != nil {
 		return nil, err
 	}

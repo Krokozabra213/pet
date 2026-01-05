@@ -1,13 +1,19 @@
 package apphttp
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/Krokozabra213/sso/internal/platform/business"
+	ssoclient "github.com/Krokozabra213/sso/internal/platform/clients/sso"
+	httpPlatform "github.com/Krokozabra213/sso/internal/platform/http"
 	platformconfig "github.com/Krokozabra213/sso/newconfigs/platform"
+	jwtv1 "github.com/Krokozabra213/sso/pkg/jwt-manager/v1"
+	keymanagerv1 "github.com/Krokozabra213/sso/pkg/key-manager/v1"
 	"github.com/Krokozabra213/sso/pkg/logger"
 )
 
@@ -21,17 +27,35 @@ func Run(configfile, envfile string) {
 
 	logger.Init(cfg.App.Environment)
 
+	// получить publickey из sso сервиса
+
 	// TODO: START MONGO CLIENT
 	// TODO: CONNECT MONGODB
 
 	// TODO: ADD FILESTORAGE PROVIDER (MINIO)
 
 	// TODO: ADD REPOSITORIES CONSTRUCTOR
-	// TODO: ADD SERVICES CONSTRUCTOR
+	ssoClient, err := ssoclient.NewClient(cfg.SSOConfig.Timeout, cfg.SSOServiceAddress(), cfg.App.AppID)
+	if err != nil {
+		panic(err)
+	}
+	publickeyPEM, err := ssoClient.GetPublicKey(context.Background())
+	if err != nil {
+		panic(err)
+	}
+	publicManager, err := keymanagerv1.NewPublicManager(publickeyPEM)
+	if err != nil {
+		panic(err)
+	}
 
-	// TODO: ADD HANDLER
+	jwtValidator, err := jwtv1.NewValidator(publicManager.GetPublicKey())
+	if err != nil {
+		panic(err)
+	}
+	business := business.New(cfg)
+	handler := httpPlatform.NewHandler(business, jwtValidator)
 
-	server := NewServer(cfg, nil)
+	server := NewServer(cfg, handler.Init(cfg))
 	go server.MustRun()
 	fmt.Println("fdfd")
 

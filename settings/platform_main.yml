@@ -12,3 +12,7 @@ limiter:
 
 mongo:
   databaseName: platform
+
+sso:
+  timeout: 5s
+  retries: 3

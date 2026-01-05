@@ -8,6 +8,7 @@ import (
 
 type Course struct {
 	ID          primitive.ObjectID
+	SchoolID    primitive.ObjectID
 	Name        string
 	Description string
 	Color       string

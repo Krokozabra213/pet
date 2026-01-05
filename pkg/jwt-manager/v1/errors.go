@@ -16,4 +16,5 @@ var (
 	ErrExp                = errors.New("exp not found in token")
 	ErrAppID              = errors.New("app_id not found in token")
 	ErrJWTID              = errors.New("jwt_id not found in token")
+	ErrInvalidClaims      = errors.New("invalid claims")
 )

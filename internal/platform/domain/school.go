@@ -6,6 +6,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+// коллекция school
 type School struct {
 	ID          primitive.ObjectID
 	Name        string

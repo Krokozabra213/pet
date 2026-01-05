@@ -2,45 +2,46 @@ package httpv1
 
 import (
 	"github.com/Krokozabra213/sso/internal/platform/business"
+	jwtv1 "github.com/Krokozabra213/sso/pkg/jwt-manager/v1"
 	"github.com/gin-gonic/gin"
 )
 
 type Handler struct {
-	busines *business.Business
+	busines   *business.Business
+	validator *jwtv1.Validator
 }
 
-func NewHandler(business *business.Business) *Handler {
+func NewHandler(business *business.Business, validator *jwtv1.Validator) *Handler {
 	return &Handler{
-		busines: business,
+		busines:   business,
+		validator: validator,
 	}
 }
 
 func (h *Handler) Init(api *gin.RouterGroup) {
 	v1 := api.Group("/v1")
 	{
-		h.initSchools(v1)
+		h.initSchoolsRoutes(v1)
+		h.initAccountRoutes(v1)
 	}
 }
 
-func (h *Handler) initSchools(v1 *gin.RouterGroup) {
-	schools := v1.Group("/schools")
+func (h *Handler) initAccountRoutes(v1 *gin.RouterGroup) {
+	account := v1.Group("account") // middleware валидирующая токен
 	{
-		schools.GET("")    // достаем все школы
-		schools.GET("/id") // достаем одну школу и показываем все курсы
+		account.POST("/sign-up")
+		account.POST("/sign-in")
+		account.POST("/auth/refresh") // refresh tokena
+	}
+}
 
-		courses := schools.Group("/courses")
-		{
-			courses.GET("/:id") // достаем какой то курс
-
-			modules := courses.Group("/modules")
-			{
-				modules.GET("/:id") // достаем модуль и показываем уроки
-
-				lessons := modules.Group("/lessons")
-				{
-					lessons.GET("/:id") // показываем какойто урок
-				}
-			}
-		}
+func (h *Handler) initSchoolsRoutes(v1 *gin.RouterGroup) {
+	schools := v1.Group("", h.softValidateJWTToken) // middleware валидирующая jwt token
+	{
+		schools.GET("", h.getAllPublishedSchools)
+		schools.GET("/school/:school_id", h.getSchool)
+		schools.GET("/course/:course_id", h.getCourse)
+		schools.GET("/module/:module_id", h.getModule)
+		schools.GET("/lesson/:lesson_id", h.getLesson)
 	}
 }
