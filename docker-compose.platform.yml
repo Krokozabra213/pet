@@ -5,12 +5,12 @@ services:
     env_file:
       - platform.env
     ports:
-      - '27020:27017'
+      - "27020:27017"
     volumes:
       - mongo-data:/data/db
 
 volumes:
   mongo-data:
 
-networks:
-  - platform-network
+# networks:
+#   - platform-network

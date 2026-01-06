@@ -3,6 +3,7 @@ package ssoclient
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/Krokozabra213/protos/gen/go/sso"
@@ -37,6 +38,7 @@ func NewClient(timeout time.Duration, address string, appID int32) (*Client, err
 
 func (c *Client) GetPublicKey(ctx context.Context) (string, error) {
 	const op = "clients.sso.getpublickey"
+	log.Println(c.timeout)
 
 	ctx, cancel := context.WithTimeout(ctx, c.timeout)
 	defer cancel()

@@ -1,4 +1,4 @@
-package newdomain
+package domain
 
 import (
 	"time"

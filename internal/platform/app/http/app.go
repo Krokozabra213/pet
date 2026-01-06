@@ -13,6 +13,7 @@ import (
 	httpPlatform "github.com/Krokozabra213/sso/internal/platform/http"
 	"github.com/Krokozabra213/sso/internal/platform/repository"
 	platformconfig "github.com/Krokozabra213/sso/newconfigs/platform"
+	"github.com/Krokozabra213/sso/pkg/db/mongodb"
 	jwtv1 "github.com/Krokozabra213/sso/pkg/jwt-manager/v1"
 	keymanagerv1 "github.com/Krokozabra213/sso/pkg/key-manager/v1"
 	"github.com/Krokozabra213/sso/pkg/logger"
@@ -30,10 +31,16 @@ func Run(configfile, envfile string) {
 
 	// TODO: START MONGO CLIENT
 	// TODO: CONNECT MONGODB
+	mongoClient, err := mongodb.NewClient(cfg.Mongo.URI, cfg.Mongo.User, cfg.Mongo.Password)
+	if err != nil {
+		panic(err)
+	}
+	defer mongodb.Disconnect(mongoClient)
+
+	db := mongoClient.Database(cfg.Mongo.Name)
 
 	// TODO: ADD FILESTORAGE PROVIDER (MINIO)
 
-	// TODO: ADD REPOSITORIES CONSTRUCTOR
 	ssoClient, err := ssoclient.NewClient(cfg.SSOConfig.Timeout, cfg.SSOServiceAddress(), cfg.App.AppID)
 	if err != nil {
 		panic(err)
@@ -51,7 +58,7 @@ func Run(configfile, envfile string) {
 	if err != nil {
 		panic(err)
 	}
-	repositories := repository.NewRepositories(nil)
+	repositories := repository.NewRepositories(db)
 	business := business.New(business.Deps{
 		Config: cfg,
 		Repos:  repositories,

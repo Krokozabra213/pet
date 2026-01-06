@@ -21,6 +21,6 @@ func getUserDataCtx(c *gin.Context) (UserShortData, error) {
 }
 
 type UserShortData struct {
-	UserID   string
+	UserID   int
 	Username string
 }

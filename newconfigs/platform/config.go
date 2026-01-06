@@ -2,6 +2,7 @@ package platformconfig
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -83,7 +84,7 @@ func newCfg() Config {
 }
 
 func (c Config) SSOServiceAddress() string {
-	return c.SSOConfig.Host + ":" + c.SSOConfig.Port
+	return net.JoinHostPort(c.SSOConfig.Host, c.SSOConfig.Port)
 }
 
 func populateDefault() {
