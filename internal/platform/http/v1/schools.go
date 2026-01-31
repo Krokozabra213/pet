@@ -8,8 +8,10 @@ import (
 )
 
 const (
-	EmptyIDParam   = "empty id param"
-	InvalidIDParam = "invalid id param"
+	EmptyIDParam     = "empty id param"
+	InvalidIDParam   = "invalid id param"
+	ErrAuthorization = "authorization error"
+	ErrAccessDenied  = "access denied error"
 )
 
 type dataResponse struct {

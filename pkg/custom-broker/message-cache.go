@@ -36,6 +36,16 @@ func newMessageCache(cap int) *messageCache {
 	}
 }
 
+func (mc *messageCache) getReadyMessageCount() int {
+	count := 0
+	for _, m := range mc.queue {
+		if m.Status == Ready {
+			count++
+		}
+	}
+	return count
+}
+
 func (mc *messageCache) getBuffer() <-chan interface{} {
 	return mc.Buffer
 }

@@ -5,20 +5,18 @@ import (
 	appgrpc "github.com/Krokozabra213/sso/internal/chat/app/grpc"
 	chatusecases "github.com/Krokozabra213/sso/internal/chat/business/usecases"
 	chatinterfaces "github.com/Krokozabra213/sso/internal/chat/grpc/interfaces"
-	custombroker "github.com/Krokozabra213/sso/pkg/custom-broker"
-	postgrespet "github.com/Krokozabra213/sso/pkg/db/postgres-pet"
 )
 
 type IAppBuilder interface {
 
 	// Connect
-	BrokerConn() *custombroker.CBroker
-	PGConn() *postgrespet.PGDB
+	// BrokerConn() *custombroker.CBroker
+	// PGConn() *postgrespet.PGDB
 
 	// Repository providers
-	ClientProvider(brokerConn *custombroker.CBroker) chatusecases.IClientRepo
-	MessageProvider(brokerConn *custombroker.CBroker) chatusecases.IMessageRepo
-	MessageSaver(dbconn *postgrespet.PGDB) chatusecases.IMessageSaver
+	ClientProvider() chatusecases.IClientRepo
+	MessageProvider() chatusecases.IMessageRepo
+	MessageSaver() chatusecases.IMessageSaver
 
 	// Business logic layer
 	Business(
@@ -46,13 +44,13 @@ func NewAppFactory(builder IAppBuilder) *AppFactory {
 
 func (fact *AppFactory) Create() *appgrpc.App {
 
-	brokerConn := fact.builder.BrokerConn()
-	pgConn := fact.builder.PGConn()
+	// brokerConn := fact.builder.BrokerConn()
+	// pgConn := fact.builder.PGConn()
 
 	// Repositories
-	clientRepo := fact.builder.ClientProvider(brokerConn)
-	messageRepo := fact.builder.MessageProvider(brokerConn)
-	messageSaver := fact.builder.MessageSaver(pgConn)
+	clientRepo := fact.builder.ClientProvider()
+	messageRepo := fact.builder.MessageProvider()
+	messageSaver := fact.builder.MessageSaver()
 
 	// Business-Logic
 	business := fact.builder.Business(

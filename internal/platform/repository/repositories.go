@@ -14,6 +14,7 @@ type ISchools interface {
 }
 
 type ICourses interface {
+	GetAllPublished(ctx context.Context) ([]domain.AllCourseOutput, error)
 	GetByID(ctx context.Context, id primitive.ObjectID) (*domain.Course, error)
 }
 

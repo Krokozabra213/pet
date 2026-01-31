@@ -3,3 +3,35 @@
 **/postgres-data-test
 **/redis-data
 *.log
+
+
+# ================================
+# Environment files
+# ================================
+.env
+.env.*
+.env.local
+.env.*.local
+*.env
+!.env.example
+!.env.sample
+
+
+# ================================
+# IDE - JetBrains (GoLand, IntelliJ)
+# ================================
+.idea/
+*.iml
+*.ipr
+*.iws
+
+
+# ================================
+# IDE - VS Code
+# ================================
+.vscode/
+*.code-workspace
+
+# Binaries
+bin/
+*.exe

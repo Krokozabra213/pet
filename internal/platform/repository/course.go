@@ -36,3 +36,20 @@ func (r *CourseRepo) GetByID(ctx context.Context, id primitive.ObjectID) (*domai
 
 	return &course, err
 }
+
+func (r *CourseRepo) GetAllPublished(ctx context.Context) ([]domain.AllCourseOutput, error) {
+	var courses []domain.AllCourseOutput
+
+	filter := bson.M{
+		"published": true,
+	}
+
+	cur, err := r.db.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	err = cur.All(ctx, &courses)
+
+	return courses, err
+}

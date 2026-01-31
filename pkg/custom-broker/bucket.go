@@ -29,6 +29,10 @@ func NewBucket(cap int) *Bucket {
 	return bucket
 }
 
+func (S *Bucket) getReadyMessageCount() int {
+	return S.messageQueue.getReadyMessageCount()
+}
+
 // количество клиентов в кеше
 func (S *Bucket) getClientCount() int {
 	return S.clientCache.Len()

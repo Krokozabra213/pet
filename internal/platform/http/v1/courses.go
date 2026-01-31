@@ -36,3 +36,53 @@ func (h *Handler) getCourse(c *gin.Context) {
 
 	c.JSON(http.StatusOK, response)
 }
+
+func (h *Handler) getAllPublishedCourses(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	AllCourseOutput, err := h.busines.Courses.GetAllPublished(ctx)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, response{Message: err.Error()})
+	}
+
+	response := dataResponse{
+		Data: AllCourseOutput,
+	}
+
+	userData, err := getUserDataCtx(c)
+
+	if err == nil {
+		response.UserData = userData
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+func (h *Handler) joinCourse(c *gin.Context) {
+	ctx := c.Request.Context()
+	idParam := c.Param("course_id")
+	if idParam == "" {
+		c.AbortWithStatusJSON(http.StatusBadRequest, response{Message: EmptyIDParam})
+	}
+
+	id, err := primitive.ObjectIDFromHex(idParam)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, response{Message: InvalidIDParam})
+	}
+
+	userData, err := getUserDataCtx(c)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusForbidden, response{Message: ErrAuthorization})
+	}
+
+	err = h.busines.Student.SaveCourse(ctx, id)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, response{Message: err.Error()})
+	}
+
+	response := dataResponse{
+		UserData: userData,
+	}
+
+	c.JSON(http.StatusOK, response)
+}

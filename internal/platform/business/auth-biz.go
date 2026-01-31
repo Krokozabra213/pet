@@ -11,3 +11,14 @@ func NewAuthService() *AuthService {
 func (s *AuthService) RefreshTokens(refreshToken string) (string, string, error) {
 	return "", "", nil
 }
+
+type UserSignUpInput struct {
+	Username string
+	Email    string
+	Password string
+}
+
+type SignInInput struct {
+	Username string
+	Password string
+}

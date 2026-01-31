@@ -6,15 +6,19 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/Krokozabra213/sso/internal/chat/app"
 	chatnewconfig "github.com/Krokozabra213/sso/newconfigs/chat"
+	custombroker "github.com/Krokozabra213/sso/pkg/custom-broker"
+	postgrespet "github.com/Krokozabra213/sso/pkg/db/postgres-pet"
 	"github.com/Krokozabra213/sso/pkg/logger"
 )
 
 const (
-	EnvLocal = "local"
-	EnvProd  = "prod"
+	EnvLocal              = "local"
+	EnvProd               = "prod"
+	brokerShutdownTimeout = 20 * time.Second
 )
 
 func main() {
@@ -36,7 +40,16 @@ func main() {
 
 	logger.Init(env)
 
-	appBuilder := app.NewAppBuilder(cfg)
+	// TODO: Вынести в конфиг константы
+	broker, err := custombroker.NewCBroker(2, 1000, 10)
+	if err != nil {
+		panic(err)
+	}
+	defer broker.GracefullShutdown(brokerShutdownTimeout)
+
+	pg := postgrespet.NewPGDB(cfg.PG.DSN)
+
+	appBuilder := app.NewAppBuilder(cfg, broker, pg)
 	appFactory := app.NewAppFactory(appBuilder)
 	application := appFactory.Create()
 	go application.MustRun()

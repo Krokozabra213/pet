@@ -2,21 +2,22 @@ package custombroker
 
 import (
 	"context"
+	"log"
 	"sync"
 	"time"
 
 	brokerutils "github.com/Krokozabra213/sso/pkg/custom-broker/utils"
 	WP "github.com/Krokozabra213/sso/pkg/custom-broker/wrapped-message"
-	// "github.com/Krokozabra213/sso/pkg/broker/utils"
-	// WP "github.com/Krokozabra213/sso/pkg/broker/wrapped-message"
 )
 
 const (
 	CtxSendTimeout            = 3 * time.Second
-	GetCurrentClientCountTick = 1 * time.Second
+	GetCurrentClientCountTick = 15 * time.Second
+	ShutdownCheckInterval     = 1 * time.Second
 )
 
 type CBroker struct {
+	muShutdown     sync.RWMutex
 	buckets        []*Bucket
 	seed           uint64
 	mask           uint64
@@ -93,6 +94,9 @@ func (CB *CBroker) initBuckets(cap int) {
 }
 
 func (CB *CBroker) Subscribe(ctx context.Context, cli IClient) error {
+
+	CB.muShutdown.RLock()
+
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
@@ -102,6 +106,8 @@ func (CB *CBroker) Subscribe(ctx context.Context, cli IClient) error {
 	}
 	ind := CB.getBucketIndex(cli.GetUUID())
 	CB.buckets[ind].register(cli)
+
+	CB.muShutdown.RUnlock()
 	return nil
 }
 
@@ -115,6 +121,9 @@ func (CB *CBroker) Unsubscribe(uuid uint64) error {
 // Получаем ctx, message от клиента -> отправляем во все buckets ->
 // -> проверяем ctx.Err -> меняем статус сообщения
 func (CB *CBroker) Send(ctx context.Context, message interface{}) error {
+
+	CB.muShutdown.RLock()
+
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
@@ -158,7 +167,66 @@ func (CB *CBroker) Send(ctx context.Context, message interface{}) error {
 		m.Status = Ready // готово к отправке клиентам
 	}
 
+	CB.muShutdown.RUnlock()
+
 	return nil
+}
+
+func (CB *CBroker) getToSendStatusMessageCount() int {
+	var wg sync.WaitGroup
+	res := 0
+	ch := make(chan int)
+	for _, b := range CB.buckets {
+		wg.Add(1)
+		go func(b *Bucket) {
+			defer wg.Done()
+			ch <- b.getReadyMessageCount()
+		}(b)
+	}
+
+	go func() {
+		wg.Wait()
+		close(ch)
+	}()
+
+	for v := range ch {
+		res += v
+	}
+	return res
+}
+
+func (CB *CBroker) GracefullShutdown(timeout time.Duration) {
+	CB.muShutdown.Lock()
+	defer CB.muShutdown.Unlock()
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	ticker := time.NewTicker(ShutdownCheckInterval)
+	defer ticker.Stop()
+
+	log.Printf("Starting graceful shutdown (timeout: %v)", timeout)
+
+	for {
+		select {
+		case <-ctx.Done():
+			readyToSendMessages := CB.getToSendStatusMessageCount()
+			if readyToSendMessages != 0 {
+				log.Printf("shutdown timeout exceeded, %d messages have status ready", readyToSendMessages)
+			}
+			return
+		case <-ticker.C:
+			readyToSendMessages := CB.getToSendStatusMessageCount()
+
+			if readyToSendMessages == 0 {
+				log.Println("All messages processed, shutdown complete")
+				return
+			}
+
+			log.Printf("Waiting for %d messages to complete...", readyToSendMessages)
+
+		}
+	}
 }
 
 func (CB *CBroker) getBucketIndex(uuid uint64) uint64 {

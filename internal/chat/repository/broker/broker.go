@@ -6,11 +6,17 @@ import (
 	custombroker "github.com/Krokozabra213/sso/pkg/custom-broker"
 )
 
-type Broker struct {
-	B *custombroker.CBroker
+type IBroker interface {
+	Subscribe(ctx context.Context, cli custombroker.IClient) error
+	Unsubscribe(uuid uint64) error
+	Send(ctx context.Context, message interface{}) error
 }
 
-func New(brokerConn *custombroker.CBroker) *Broker {
+type Broker struct {
+	B IBroker
+}
+
+func New(brokerConn IBroker) *Broker {
 	return &Broker{
 		B: brokerConn,
 	}

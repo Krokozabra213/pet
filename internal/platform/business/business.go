@@ -15,6 +15,7 @@ type ISchools interface {
 }
 
 type ICourses interface {
+	GetAllPublished(ctx context.Context) ([]domain.AllCourseOutput, error)
 	GetByID(ctx context.Context, id primitive.ObjectID) (*domain.Course, error)
 }
 
@@ -27,7 +28,7 @@ type ILessons interface {
 }
 
 type IAuth interface {
-	RefreshTokens(refreshToken string) (string, string, error)
+	RefreshTokens(ctx context.Context, refreshToken string) (string, string, error)
 }
 
 type Business struct {

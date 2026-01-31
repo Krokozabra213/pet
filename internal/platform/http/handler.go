@@ -8,6 +8,7 @@ import (
 	platformconfig "github.com/Krokozabra213/sso/newconfigs/platform"
 	jwtv1 "github.com/Krokozabra213/sso/pkg/jwt-manager/v1"
 	"github.com/Krokozabra213/sso/pkg/limiter"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -30,7 +31,7 @@ func (h *Handler) Init(cfg *platformconfig.Config) *gin.Engine {
 		gin.Recovery(),
 		gin.Logger(),
 		limiter.Limit(cfg.Limiter.RPS, cfg.Limiter.Burst, cfg.Limiter.TTL),
-		corsMiddleware,
+		cors.New(getCorsConfig()),
 	)
 
 	router.GET("/ping", func(c *gin.Context) {

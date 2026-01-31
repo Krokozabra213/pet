@@ -9,47 +9,49 @@ import (
 	"github.com/Krokozabra213/sso/internal/chat/repository/broker"
 	postgresrepo "github.com/Krokozabra213/sso/internal/chat/repository/storage/postgres-repo"
 	chatnewconfig "github.com/Krokozabra213/sso/newconfigs/chat"
-	custombroker "github.com/Krokozabra213/sso/pkg/custom-broker"
 	postgrespet "github.com/Krokozabra213/sso/pkg/db/postgres-pet"
 )
 
 type ChatAppBuilder struct {
-	cfg *chatnewconfig.Config
+	cfg    *chatnewconfig.Config
+	broker broker.IBroker
+	pg     *postgrespet.PGDB
 }
 
-func NewAppBuilder(cfg *chatnewconfig.Config) *ChatAppBuilder {
+func NewAppBuilder(cfg *chatnewconfig.Config, broker broker.IBroker, pg *postgrespet.PGDB) *ChatAppBuilder {
 	return &ChatAppBuilder{
-		cfg: cfg,
+		cfg:    cfg,
+		broker: broker,
+		pg:     pg,
 	}
 }
 
-// connects
-// TODO:
-func (builder *ChatAppBuilder) BrokerConn() *custombroker.CBroker {
-	// TODO: Вынести в конфиг константы
-	broker, err := custombroker.NewCBroker(2, 1000, 10)
-	if err != nil {
-		panic(err)
-	}
-	return broker
-}
+// // connects
+// // TODO:
+// func (builder *ChatAppBuilder) BrokerConn() *custombroker.CBroker {
+// 	// TODO: Вынести в конфиг константы
+// 	broker, err := custombroker.NewCBroker(2, 1000, 10)
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	return broker
+// }
 
-func (builder *ChatAppBuilder) PGConn() *postgrespet.PGDB {
-	return postgrespet.NewPGDB(builder.cfg.PG.DSN)
-}
+// func (builder *ChatAppBuilder) PGConn() *postgrespet.PGDB {
+// 	return postgrespet.NewPGDB(builder.cfg.PG.DSN)
+// }
 
 // repositories
-// TODO:
-func (builder *ChatAppBuilder) ClientProvider(brokerConn *custombroker.CBroker) chatusecases.IClientRepo {
-	return broker.New(brokerConn)
+func (builder *ChatAppBuilder) ClientProvider() chatusecases.IClientRepo {
+	return broker.New(builder.broker)
 }
 
-func (builder *ChatAppBuilder) MessageProvider(brokerConn *custombroker.CBroker) chatusecases.IMessageRepo {
-	return broker.New(brokerConn)
+func (builder *ChatAppBuilder) MessageProvider() chatusecases.IMessageRepo {
+	return broker.New(builder.broker)
 }
 
-func (builder *ChatAppBuilder) MessageSaver(dbconn *postgrespet.PGDB) chatusecases.IMessageSaver {
-	return postgresrepo.New(dbconn)
+func (builder *ChatAppBuilder) MessageSaver() chatusecases.IMessageSaver {
+	return postgresrepo.New(builder.pg)
 }
 
 // business-logic
