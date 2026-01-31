@@ -11,6 +11,12 @@ var (
 )
 
 type (
+	LimiterConfig struct {
+		RPS   int           `mapstructure:"rps"`
+		Burst int           `mapstructure:"burst"`
+		TTL   time.Duration `mapstructure:"ttl"`
+	}
+
 	Postgres struct {
 		DSN       string
 		User      string

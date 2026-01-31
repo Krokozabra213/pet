@@ -9,8 +9,6 @@ import (
 	"github.com/Krokozabra213/sso/internal/auth/domain"
 	businessinput "github.com/Krokozabra213/sso/internal/auth/domain/business-input"
 	businessoutput "github.com/Krokozabra213/sso/internal/auth/domain/business-output"
-	"github.com/Krokozabra213/sso/internal/auth/lib/hmac"
-	"github.com/Krokozabra213/sso/internal/auth/lib/jwt"
 	"github.com/Krokozabra213/sso/internal/auth/repository/storage"
 )
 
@@ -27,13 +25,13 @@ func (a *Auth) Logout(
 	)
 	log.Info("starting user logouting process")
 
-	claims, err := jwt.ParseRefresh(refreshToken, a.keyManager)
+	claims, err := a.jwtManager.ParseRefresh(refreshToken)
 	if err != nil {
 		log.Error("failed parsing token", slog.String("error", err.Error()))
 		return nil, authBusiness.BusinessError(domain.TokenEntity, authBusiness.ErrParse)
 	}
 
-	hashToken := hmac.HashJWTTokenHMAC(refreshToken, a.cfg.Auth.AppSecretKey)
+	hashToken := a.hasher.HashJWTTokenHMAC(refreshToken)
 
 	err = a.tokenRepo.SaveToken(ctx, hashToken, claims.Exp)
 	if err != nil {

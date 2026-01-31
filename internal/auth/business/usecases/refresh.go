@@ -9,9 +9,8 @@ import (
 	"github.com/Krokozabra213/sso/internal/auth/domain"
 	businessinput "github.com/Krokozabra213/sso/internal/auth/domain/business-input"
 	businessoutput "github.com/Krokozabra213/sso/internal/auth/domain/business-output"
-	"github.com/Krokozabra213/sso/internal/auth/lib/hmac"
-	"github.com/Krokozabra213/sso/internal/auth/lib/jwt"
 	"github.com/Krokozabra213/sso/internal/auth/repository/storage"
+	jwtv1 "github.com/Krokozabra213/sso/pkg/jwt-manager/v1"
 )
 
 func (a *Auth) Refresh(
@@ -28,7 +27,7 @@ func (a *Auth) Refresh(
 	log.Info("starting refresh token process")
 
 	// хешируем токен для безопасного хранения в базе
-	hashToken := hmac.HashJWTTokenHMAC(refreshToken, a.cfg.Auth.AppSecretKey)
+	hashToken := a.hasher.HashJWTTokenHMAC(refreshToken)
 
 	exist, err := a.tokenRepo.CheckToken(ctx, hashToken)
 	if err != nil {
@@ -43,7 +42,7 @@ func (a *Auth) Refresh(
 	}
 
 	// достаём claims из refresh токена
-	claims, err := jwt.ParseRefresh(refreshToken, a.keyManager)
+	claims, err := a.jwtManager.ParseRefresh(refreshToken)
 	if err != nil {
 		log.Error("failed to parse token", slog.String("error", err.Error()))
 		return nil, authBusiness.BusinessError(domain.TokenEntity, authBusiness.ErrParse)
@@ -63,7 +62,7 @@ func (a *Auth) Refresh(
 	}
 
 	// проверяем наличие приложения с таким id
-	app, err := a.appProvider.AppByID(ctx, claims.AppID)
+	_, err = a.appProvider.AppByID(ctx, claims.AppID)
 	if err != nil {
 		log.Error("failed to get app by id", slog.String("error", err.Error()))
 		if errors.Is(err, storage.ErrCtxCancelled) || errors.Is(err, storage.ErrCtxDeadline) {
@@ -76,12 +75,13 @@ func (a *Auth) Refresh(
 	}
 
 	// генерируем новую пару токенов
-	tokenGen := jwt.New(
-		user, app, a.cfg.Auth.JWT.AccessTokenTTL,
-		a.cfg.Auth.JWT.RefreshTokenTTL, a.keyManager,
-	)
+	data := jwtv1.Data{
+		UserID:   user.ID,
+		Username: user.Username,
+		AppID:    claims.AppID,
+	}
+	access, refresh, err := a.jwtManager.GenerateTokens(&data)
 
-	tokenPair, err := tokenGen.GenerateTokenPair()
 	if err != nil {
 		log.Error("failed to generate token", "err", err.Error())
 		return nil, authBusiness.BusinessError(domain.TokenEntity, authBusiness.ErrTokenGenerate)
@@ -98,7 +98,7 @@ func (a *Auth) Refresh(
 		}
 		return nil, authBusiness.BusinessError(domain.TokenEntity, authBusiness.ErrInternal)
 	}
-	log.Info("user refreshed token", "tokens", tokenPair.AccessToken+", "+tokenPair.RefreshToken)
-	uotput := businessoutput.NewRefreshOutput(tokenPair.AccessToken, tokenPair.RefreshToken)
+	log.Info("user refreshed token", "tokens", access+", "+refresh)
+	uotput := businessoutput.NewRefreshOutput(access, refresh)
 	return uotput, nil
 }

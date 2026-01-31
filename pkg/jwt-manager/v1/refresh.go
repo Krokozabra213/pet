@@ -1,4 +1,4 @@
-package jwt
+package jwtv1
 
 import (
 	"fmt"
@@ -7,49 +7,65 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func (gen *TokenGenerator) NewAccess() (string, error) {
+func (m *JWTManager) GenerateRefresh(
+	userID uint64, username string, appID int,
+) (string, error) {
 	token := jwt.New(jwt.SigningMethodRS256)
 	claims := token.Claims.(jwt.MapClaims)
 
-	gen.accessClaims(claims)
-
-	tokenString, err := token.SignedString(gen.keyManager.GetPrivateKey())
+	err := m.generateRefreshClaims(claims, userID, username, appID)
 	if err != nil {
-		return "", ErrJWT
+		return "", err
+	}
+
+	tokenString, err := token.SignedString(m.privateKey)
+	if err != nil {
+		return "", ErrSignedRefreshToken
 	}
 
 	return tokenString, nil
 }
 
-func (gen *TokenGenerator) accessClaims(claims jwt.MapClaims) {
-	claims[AppID] = gen.app.ID
-	claims[UserID] = gen.user.ID
-	claims[Username] = gen.user.Username
-	claims[ExpiredAt] = time.Now().Add(gen.accessTTL).Unix()
+func (m *JWTManager) generateRefreshClaims(
+	claims jwt.MapClaims, userID uint64, username string, appID int,
+) error {
+
+	jwtID, err := generateTokenID()
+	if err != nil {
+		return ErrGenerateJWTID
+	}
+
+	claims[JWTID] = jwtID
+	claims[UserID] = userID
+	claims[Username] = username
+	claims[ExpiredAt] = time.Now().Add(m.refreshTTL).Unix()
+	claims[AppID] = appID
+
+	return nil
 }
 
-// Access jwt parser
-type AccessData struct {
+type RefreshData struct {
+	JWTID    string
 	UserID   int
 	Username string
 	Exp      time.Time
 	AppID    int
 }
 
-func (data *AccessData) Validate() error {
+func (data *RefreshData) Validate() error {
 	if time.Now().After(data.Exp) {
 		return ErrValidExp
 	}
 	return nil
 }
 
-func ParseAccess(token string, keyManager IPublicKey) (*AccessData, error) {
+func (m *JWTManager) ParseRefresh(token string) (*RefreshData, error) {
 
 	t, err := jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodRSA); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
 		}
-		return keyManager.GetPublicKey(), nil
+		return m.publicKey, nil
 	}, jwt.WithoutClaimsValidation())
 
 	if err != nil {
@@ -60,7 +76,12 @@ func ParseAccess(token string, keyManager IPublicKey) (*AccessData, error) {
 		return nil, ErrValidToken
 	}
 
-	jwtData, err := accessClaims(t.Claims.(jwt.MapClaims))
+	claims, ok := t.Claims.(jwt.MapClaims)
+	if !ok {
+		return nil, ErrInvalidClaims
+	}
+
+	jwtData, err := refreshClaims(claims)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +94,7 @@ func ParseAccess(token string, keyManager IPublicKey) (*AccessData, error) {
 	return jwtData, nil
 }
 
-func accessClaims(claims jwt.MapClaims) (*AccessData, error) {
+func refreshClaims(claims jwt.MapClaims) (*RefreshData, error) {
 	// integers become float64 when decoding JWT
 	userID, ok := claims[UserID].(float64)
 	if !ok {
@@ -95,7 +116,13 @@ func accessClaims(claims jwt.MapClaims) (*AccessData, error) {
 		return nil, ErrAppID
 	}
 
-	return &AccessData{
+	jwtID, ok := claims[JWTID].(string)
+	if !ok {
+		return nil, ErrJWTID
+	}
+
+	return &RefreshData{
+		JWTID:    jwtID,
 		UserID:   int(userID),
 		Username: username,
 		Exp:      JWTFloatToTime(exp),
